@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0",
+  "source_path_at_capture": "/home/max/auftrags-mcp/server.py",
+  "source_sha256": "b37def4580e71efdbd9b2c6437d900cddc3938a63b97abfed3c653baa0e9b43f",
+  "captured_tools": {
+    "auftrag_assign": ["caller_instance_id", "auftrag_id", "assigned_to"],
+    "auftrag_block": ["caller_instance_id", "auftrag_id", "reason", "step_id", "block_type"],
+    "auftrag_cancel": ["caller_instance_id", "auftrag_id", "reason"],
+    "auftrag_checkpoint": ["caller_instance_id", "auftrag_id", "step_id", "status", "checkpoint_data", "error_message", "duration_actual"],
+    "auftrag_close": ["caller_instance_id", "auftrag_id", "result", "summary", "kpi_results", "duration_actual", "execution_quality", "decision_quality", "root_cause", "root_cause_category", "kpis_verified", "existing_outcome_id"],
+    "auftrag_create": ["caller_instance_id", "id", "title", "project", "steps", "description", "exit_kpis", "constraints", "rollback", "decision_ref", "based_on", "priority", "assigned_to", "duration_planned", "predecessor_id", "tags", "context_policy"],
+    "auftrag_get": ["auftrag_id", "caller_instance_id"],
+    "auftrag_get_changelog": ["caller_instance_id", "auftrag_id", "instance_id", "project", "period", "action", "limit"],
+    "auftrag_list": ["caller_instance_id", "status", "project", "assigned_to"],
+    "auftrag_reassign_replace": ["caller_instance_id", "auftrag_id", "new_auftrag_id", "new_assigned_to", "reason", "context_policy"],
+    "auftrag_resume": ["caller_instance_id", "auftrag_id", "resolution"],
+    "auftrag_start": ["caller_instance_id", "auftrag_id"],
+    "get_instance_activity": ["auftrag_id", "limit", "caller_instance_id"]
+  },
+  "classification_policy": {
+    "all_tools": "breaking_intentional",
+    "reason": "The clean-room public core preserves tool names and lifecycle purpose but intentionally replaces caller-string/bearer authority with a mandatory signed identity envelope, strict schemas, bounded queries, privacy minimization and immutable identity audit. Legacy clients require explicit migration."
+  }
+}
