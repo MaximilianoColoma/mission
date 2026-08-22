@@ -29,6 +29,11 @@ SECRET_PATTERNS = {
 PII_PATTERNS = {
     "email": re.compile(r"(?<![\w.+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}(?![\w.-])"),
 }
+SPDX_LICENSES = {
+    "Apache-2.0", "Apache-2.0 OR BSD-2-Clause", "Apache-2.0 OR BSD-3-Clause",
+    "BSD-2-Clause", "BSD-3-Clause", "ISC", "MIT", "MIT-0", "MPL-2.0",
+    "PSF-2.0", "Unlicense",
+}
 
 
 def sha(path: Path) -> str:
@@ -105,6 +110,38 @@ def license_inventory() -> tuple[list[dict], list[str], list[str]]:
     return sorted(packages.values(), key=lambda item: item["name"]), sorted(set(unknown)), sorted(set(owner_decisions))
 
 
+def spdx_license(expression: str) -> str:
+    """Return a valid declared SPDX expression without guessing ambiguous licenses."""
+    if expression in SPDX_LICENSES:
+        return expression
+    if expression == "MIT License" or "Permission is hereby granted, free of charge" in expression:
+        return "MIT"
+    return "NOASSERTION"
+
+
+def validate_spdx(sbom: dict) -> dict[str, object]:
+    """Fail closed on the SPDX invariants this deterministic generator owns."""
+    errors: list[str] = []
+    creation = sbom.get("creationInfo", {})
+    if not creation.get("created") or not creation.get("creators"):
+        errors.append("creationInfo")
+    packages = sbom.get("packages", [])
+    ids = [item.get("SPDXID") for item in packages]
+    if len(ids) != len(set(ids)) or any(not item for item in ids):
+        errors.append("package-SPDXID")
+    for package in packages:
+        for field in ("name", "SPDXID", "versionInfo", "downloadLocation", "filesAnalyzed", "licenseConcluded", "licenseDeclared", "copyrightText"):
+            if field not in package:
+                errors.append(f"{package.get('SPDXID', 'unknown')}:{field}")
+        for field in ("licenseConcluded", "licenseDeclared"):
+            value = package.get(field)
+            if value != "NOASSERTION" and value not in SPDX_LICENSES:
+                errors.append(f"{package.get('SPDXID', 'unknown')}:{field}:invalid")
+    if sbom.get("documentDescribes") != [f"SPDXRef-Package-{PRODUCT}"]:
+        errors.append("documentDescribes")
+    return {"status": "pass" if not errors else "blocked", "errors": sorted(set(errors))}
+
+
 def scan(root: Path) -> dict[str, list[dict]]:
     findings = {"secret_findings": [], "pii_findings": []}
     paths = []
@@ -144,23 +181,45 @@ def main() -> int:
     packages, unknown, owner_decisions = license_inventory()
     licenses = {"packages": packages, "unknown": unknown, "owner_decisions": owner_decisions}
     scans = scan(root)
+    root_metadata = next(item for item in packages if item["name"] == DISTRIBUTION)
+    dependency_metadata = [item for item in packages if item["name"] != DISTRIBUTION]
+    root_package = {
+        "name": DISTRIBUTION,
+        "SPDXID": f"SPDXRef-Package-{PRODUCT}",
+        "versionInfo": root_metadata["version"],
+        "packageFileName": first_paths["wheel"].name,
+        "downloadLocation": f"https://github.com/MaximilianoColoma/{PRODUCT}/releases/download/v{root_metadata['version']}/{first_paths['wheel'].name}",
+        "filesAnalyzed": False,
+        "licenseConcluded": "NOASSERTION",
+        "licenseDeclared": spdx_license(root_metadata["license"]),
+        "copyrightText": "NOASSERTION",
+        "checksums": [{"algorithm": "SHA256", "checksumValue": first["wheel"]}],
+    }
+    dependency_packages = [
+        {
+            "name": item["name"], "SPDXID": f"SPDXRef-Package-{index}",
+            "versionInfo": item["version"], "downloadLocation": "NOASSERTION",
+            "filesAnalyzed": False, "licenseConcluded": "NOASSERTION",
+            "licenseDeclared": spdx_license(item["license"]), "copyrightText": "NOASSERTION",
+        }
+        for index, item in enumerate(dependency_metadata)
+    ]
     sbom = {
         "spdxVersion": "SPDX-2.3",
         "dataLicense": "CC0-1.0",
         "SPDXID": "SPDXRef-DOCUMENT",
         "name": f"{PRODUCT}-supply-chain",
         "documentNamespace": f"https://github.com/MaximilianoColoma/{PRODUCT}/sbom/{first['wheel']}",
-        "packages": [{"name": PRODUCT, "SPDXID": f"SPDXRef-Package-{PRODUCT}", "versionInfo": "0.0.0", "downloadLocation": "NOASSERTION", "licenseConcluded": "NOASSERTION"}] + [
-            {"name": item["name"], "SPDXID": f"SPDXRef-Package-{index}", "versionInfo": item["version"], "downloadLocation": "NOASSERTION", "licenseConcluded": item["license"]}
-            for index, item in enumerate(packages)
-        ],
-        "externalDocumentRefs": [{"externalDocumentId": "DocumentRef-wheel", "spdxDocument": first_paths["wheel"].name, "checksum": {"algorithm": "SHA256", "checksumValue": first["wheel"]}}],
+        "creationInfo": {"created": "2024-01-01T00:00:00Z", "creators": [f"Tool: {DISTRIBUTION} supply_chain.py"]},
+        "documentDescribes": [f"SPDXRef-Package-{PRODUCT}"],
+        "packages": [root_package] + dependency_packages,
     }
-    status = "pass" if first == second and not missing and not unexpected_roots and not unknown and not any(scans.values()) else "blocked"
+    spdx_validation = validate_spdx(sbom)
+    status = "pass" if first == second and not missing and not unexpected_roots and not unknown and not any(scans.values()) and spdx_validation["status"] == "pass" else "blocked"
     report = {
         "status": status, "product": PRODUCT, "builds": {"first": first, "second": second},
         "reconciliation": {"package": PACKAGE, "missing_expected_files": missing, "unexpected_import_roots": unexpected_roots},
-        "scans": scans, "licenses": {"unknown": unknown, "owner_decisions": owner_decisions},
+        "scans": scans, "licenses": {"unknown": unknown, "owner_decisions": owner_decisions}, "spdx_validation": spdx_validation,
         "statement_limit": "Build and supply-chain evidence only; owner license choice, release, publication and deployment remain separate gates.",
     }
     (output / "sbom.spdx.json").write_text(json.dumps(sbom, indent=2, sort_keys=True) + "\n")
