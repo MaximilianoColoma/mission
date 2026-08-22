@@ -1,0 +1,30 @@
+name: Feature request
+description: Propose a bounded improvement
+title: "[Proposal]: "
+labels: ["proposal", "triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and evidence
+      description: What observable problem exists, for whom, and how is it known?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+    validations:
+      required: true
+  - type: textarea
+    id: contracts
+    attributes:
+      label: Contract, security, compatibility, and migration effects
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and rollback
+    validations:
+      required: true

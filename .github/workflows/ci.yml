@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Check out exact revision
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
       - name: Install pinned uv
         uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
         with:
@@ -27,6 +29,9 @@ jobs:
           enable-cache: true
       - name: Locked clean install
         run: uv sync --locked
+      - name: Verify DCO sign-offs
+        if: github.event_name == 'pull_request'
+        run: uv run python scripts/check_dco.py --range "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
       - name: Full acceptance and repair suites
         run: PYTHONDONTWRITEBYTECODE=1 uv run python -m pytest -q -p no:cacheprovider tests repair-tests
       - name: Compile source

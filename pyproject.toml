@@ -1,12 +1,22 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "mission-public"
-version = "0.0.0"
+version = "0.1.0"
+description = "Persistent MCP work-state coordination with identity-bound lifecycle transitions."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{name = "Maximiliano Coloma-Seegers"}]
 requires-python = ">=3.11"
 dependencies = ["fastmcp>=3.4.7", "cryptography>=45"]
+
+[project.urls]
+Repository = "https://github.com/MaximilianoColoma/mission"
+Issues = "https://github.com/MaximilianoColoma/mission/issues"
+Security = "https://github.com/MaximilianoColoma/mission/security/policy"
 
 [dependency-groups]
 dev = ["pytest>=9,<10"]
