@@ -1,0 +1,2106 @@
+{
+  "auftrag_create": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "caller_instance_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "request_id": {
+        "type": "string",
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9._:-]+$",
+        "normalization": "none; exact ASCII bytes are the idempotency identity"
+      },
+      "id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "title": {
+        "type": "string",
+        "maxLength": 500
+      },
+      "project": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "steps": {
+        "type": "string",
+        "maxLength": 100000,
+        "encoding": "json_array_of_objects_string_v1",
+        "decoded_schema": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "optional": {
+                "type": "boolean",
+                "default": false
+              },
+              "acceptance": {
+                "type": "string",
+                "maxLength": 2000
+              }
+            }
+          },
+          "uniqueBy": "id"
+        }
+      },
+      "description": {
+        "type": "string",
+        "maxLength": 4000
+      },
+      "exit_kpis": {
+        "type": "string",
+        "maxLength": 20000,
+        "encoding": "json_object_string_v1",
+        "decoded_schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "required"
+          ],
+          "properties": {
+            "required": {
+              "type": "array",
+              "maxItems": 50,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "uniqueItems": true
+            }
+          }
+        }
+      },
+      "constraints": {
+        "type": "string",
+        "maxLength": 20000
+      },
+      "rollback": {
+        "type": "string",
+        "maxLength": 4000
+      },
+      "decision_ref": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "based_on": {
+        "type": "string",
+        "maxLength": 4000,
+        "encoding": "csv_or_json_array_v1"
+      },
+      "priority": {
+        "type": "string",
+        "default": "normal",
+        "enum": [
+          "low",
+          "normal",
+          "high",
+          "critical"
+        ]
+      },
+      "assigned_to": {
+        "type": "string",
+        "maxLength": 0
+      },
+      "duration_planned": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 31536000
+      },
+      "predecessor_id": {
+        "type": "string",
+        "maxLength": 0
+      },
+      "tags": {
+        "type": "string",
+        "maxLength": 2000,
+        "encoding": "csv_or_json_array_v1"
+      },
+      "context_policy": {
+        "type": "string",
+        "maxLength": 10000
+      },
+      "identity_envelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "string",
+            "const": "1.0"
+          },
+          "principal_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_attestation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "conditions": {
+                "type": "string",
+                "maxLength": 2000
+              },
+              "signature": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{128}$"
+              }
+            },
+            "required": [
+              "conditions",
+              "signature"
+            ]
+          },
+          "profile_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "profile_version_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "tenant_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "runtime_generation": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tool_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "payload_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "nonce": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "issued_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "expires_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "signature": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{128}$"
+          }
+        },
+        "required": [
+          "version",
+          "principal_pubkey",
+          "owner_pubkey",
+          "owner_attestation",
+          "profile_id",
+          "profile_version_sha256",
+          "tenant_id",
+          "runtime_generation",
+          "tool_name",
+          "payload_sha256",
+          "nonce",
+          "issued_at",
+          "expires_at",
+          "signature"
+        ],
+        "constraints": [
+          "expires_at > issued_at",
+          "tenant_id equals server-resolved tenant",
+          "tool_name equals dispatch target",
+          "payload_sha256 binds exact raw request without identity_envelope",
+          "principal_pubkey verifies signature",
+          "owner_pubkey verifies owner_attestation",
+          "profile hash resolves current authorized bytes",
+          "nonce atomically first-use in shared tenant store"
+        ]
+      }
+    },
+    "required": [
+      "caller_instance_id",
+      "id",
+      "title",
+      "project",
+      "steps",
+      "request_id",
+      "identity_envelope"
+    ]
+  },
+  "auftrag_list": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "caller_instance_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "status": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "project": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "assigned_to": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "limit": {
+        "type": "integer",
+        "default": 50,
+        "minimum": 1,
+        "maximum": 100
+      },
+      "offset": {
+        "type": "integer",
+        "default": 0,
+        "minimum": 0,
+        "maximum": 100000
+      },
+      "identity_envelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "string",
+            "const": "1.0"
+          },
+          "principal_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_attestation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "conditions": {
+                "type": "string",
+                "maxLength": 2000
+              },
+              "signature": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{128}$"
+              }
+            },
+            "required": [
+              "conditions",
+              "signature"
+            ]
+          },
+          "profile_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "profile_version_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "tenant_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "runtime_generation": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tool_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "payload_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "nonce": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "issued_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "expires_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "signature": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{128}$"
+          }
+        },
+        "required": [
+          "version",
+          "principal_pubkey",
+          "owner_pubkey",
+          "owner_attestation",
+          "profile_id",
+          "profile_version_sha256",
+          "tenant_id",
+          "runtime_generation",
+          "tool_name",
+          "payload_sha256",
+          "nonce",
+          "issued_at",
+          "expires_at",
+          "signature"
+        ],
+        "constraints": [
+          "expires_at > issued_at",
+          "tenant_id equals server-resolved tenant",
+          "tool_name equals dispatch target",
+          "payload_sha256 binds exact raw request without identity_envelope",
+          "principal_pubkey verifies signature",
+          "owner_pubkey verifies owner_attestation",
+          "profile hash resolves current authorized bytes",
+          "nonce atomically first-use in shared tenant store"
+        ]
+      }
+    },
+    "required": [
+      "caller_instance_id",
+      "identity_envelope"
+    ]
+  },
+  "auftrag_get": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "auftrag_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "caller_instance_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "identity_envelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "string",
+            "const": "1.0"
+          },
+          "principal_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_attestation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "conditions": {
+                "type": "string",
+                "maxLength": 2000
+              },
+              "signature": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{128}$"
+              }
+            },
+            "required": [
+              "conditions",
+              "signature"
+            ]
+          },
+          "profile_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "profile_version_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "tenant_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "runtime_generation": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tool_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "payload_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "nonce": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "issued_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "expires_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "signature": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{128}$"
+          }
+        },
+        "required": [
+          "version",
+          "principal_pubkey",
+          "owner_pubkey",
+          "owner_attestation",
+          "profile_id",
+          "profile_version_sha256",
+          "tenant_id",
+          "runtime_generation",
+          "tool_name",
+          "payload_sha256",
+          "nonce",
+          "issued_at",
+          "expires_at",
+          "signature"
+        ],
+        "constraints": [
+          "expires_at > issued_at",
+          "tenant_id equals server-resolved tenant",
+          "tool_name equals dispatch target",
+          "payload_sha256 binds exact raw request without identity_envelope",
+          "principal_pubkey verifies signature",
+          "owner_pubkey verifies owner_attestation",
+          "profile hash resolves current authorized bytes",
+          "nonce atomically first-use in shared tenant store"
+        ]
+      }
+    },
+    "required": [
+      "auftrag_id",
+      "caller_instance_id",
+      "identity_envelope"
+    ]
+  },
+  "auftrag_assign": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "caller_instance_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "request_id": {
+        "type": "string",
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9._:-]+$",
+        "normalization": "none; exact ASCII bytes are the idempotency identity"
+      },
+      "auftrag_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "assigned_to": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "identity_envelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "string",
+            "const": "1.0"
+          },
+          "principal_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_attestation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "conditions": {
+                "type": "string",
+                "maxLength": 2000
+              },
+              "signature": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{128}$"
+              }
+            },
+            "required": [
+              "conditions",
+              "signature"
+            ]
+          },
+          "profile_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "profile_version_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "tenant_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "runtime_generation": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tool_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "payload_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "nonce": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "issued_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "expires_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "signature": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{128}$"
+          }
+        },
+        "required": [
+          "version",
+          "principal_pubkey",
+          "owner_pubkey",
+          "owner_attestation",
+          "profile_id",
+          "profile_version_sha256",
+          "tenant_id",
+          "runtime_generation",
+          "tool_name",
+          "payload_sha256",
+          "nonce",
+          "issued_at",
+          "expires_at",
+          "signature"
+        ],
+        "constraints": [
+          "expires_at > issued_at",
+          "tenant_id equals server-resolved tenant",
+          "tool_name equals dispatch target",
+          "payload_sha256 binds exact raw request without identity_envelope",
+          "principal_pubkey verifies signature",
+          "owner_pubkey verifies owner_attestation",
+          "profile hash resolves current authorized bytes",
+          "nonce atomically first-use in shared tenant store"
+        ]
+      }
+    },
+    "required": [
+      "caller_instance_id",
+      "auftrag_id",
+      "assigned_to",
+      "request_id",
+      "identity_envelope"
+    ]
+  },
+  "auftrag_reassign_replace": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "caller_instance_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "request_id": {
+        "type": "string",
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9._:-]+$",
+        "normalization": "none; exact ASCII bytes are the idempotency identity"
+      },
+      "auftrag_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "new_auftrag_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "new_assigned_to": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "reason": {
+        "type": "string",
+        "maxLength": 4000
+      },
+      "context_policy": {
+        "type": "string",
+        "maxLength": 10000
+      },
+      "identity_envelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "string",
+            "const": "1.0"
+          },
+          "principal_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_attestation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "conditions": {
+                "type": "string",
+                "maxLength": 2000
+              },
+              "signature": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{128}$"
+              }
+            },
+            "required": [
+              "conditions",
+              "signature"
+            ]
+          },
+          "profile_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "profile_version_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "tenant_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "runtime_generation": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tool_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "payload_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "nonce": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "issued_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "expires_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "signature": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{128}$"
+          }
+        },
+        "required": [
+          "version",
+          "principal_pubkey",
+          "owner_pubkey",
+          "owner_attestation",
+          "profile_id",
+          "profile_version_sha256",
+          "tenant_id",
+          "runtime_generation",
+          "tool_name",
+          "payload_sha256",
+          "nonce",
+          "issued_at",
+          "expires_at",
+          "signature"
+        ],
+        "constraints": [
+          "expires_at > issued_at",
+          "tenant_id equals server-resolved tenant",
+          "tool_name equals dispatch target",
+          "payload_sha256 binds exact raw request without identity_envelope",
+          "principal_pubkey verifies signature",
+          "owner_pubkey verifies owner_attestation",
+          "profile hash resolves current authorized bytes",
+          "nonce atomically first-use in shared tenant store"
+        ]
+      }
+    },
+    "required": [
+      "caller_instance_id",
+      "auftrag_id",
+      "new_auftrag_id",
+      "new_assigned_to",
+      "request_id",
+      "identity_envelope"
+    ]
+  },
+  "auftrag_start": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "caller_instance_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "request_id": {
+        "type": "string",
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9._:-]+$",
+        "normalization": "none; exact ASCII bytes are the idempotency identity"
+      },
+      "auftrag_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "identity_envelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "string",
+            "const": "1.0"
+          },
+          "principal_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_attestation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "conditions": {
+                "type": "string",
+                "maxLength": 2000
+              },
+              "signature": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{128}$"
+              }
+            },
+            "required": [
+              "conditions",
+              "signature"
+            ]
+          },
+          "profile_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "profile_version_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "tenant_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "runtime_generation": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tool_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "payload_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "nonce": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "issued_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "expires_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "signature": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{128}$"
+          }
+        },
+        "required": [
+          "version",
+          "principal_pubkey",
+          "owner_pubkey",
+          "owner_attestation",
+          "profile_id",
+          "profile_version_sha256",
+          "tenant_id",
+          "runtime_generation",
+          "tool_name",
+          "payload_sha256",
+          "nonce",
+          "issued_at",
+          "expires_at",
+          "signature"
+        ],
+        "constraints": [
+          "expires_at > issued_at",
+          "tenant_id equals server-resolved tenant",
+          "tool_name equals dispatch target",
+          "payload_sha256 binds exact raw request without identity_envelope",
+          "principal_pubkey verifies signature",
+          "owner_pubkey verifies owner_attestation",
+          "profile hash resolves current authorized bytes",
+          "nonce atomically first-use in shared tenant store"
+        ]
+      }
+    },
+    "required": [
+      "caller_instance_id",
+      "auftrag_id",
+      "request_id",
+      "identity_envelope"
+    ]
+  },
+  "auftrag_checkpoint": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "caller_instance_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "request_id": {
+        "type": "string",
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9._:-]+$",
+        "normalization": "none; exact ASCII bytes are the idempotency identity"
+      },
+      "auftrag_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "step_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "pass",
+          "fail",
+          "skipped"
+        ]
+      },
+      "checkpoint_data": {
+        "type": "string",
+        "default": "{}",
+        "maxLength": 100000,
+        "encoding": "json_object_string_v1",
+        "decoded_schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "evidence": {
+              "type": "array",
+              "maxItems": 50,
+              "items": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "note": {
+              "type": "string",
+              "maxLength": 4000
+            },
+            "metrics": {
+              "type": "object",
+              "additionalProperties": {
+                "type": [
+                  "number",
+                  "string",
+                  "boolean"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "error_message": {
+        "type": "string",
+        "maxLength": 4000
+      },
+      "duration_actual": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 31536000
+      },
+      "identity_envelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "string",
+            "const": "1.0"
+          },
+          "principal_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_attestation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "conditions": {
+                "type": "string",
+                "maxLength": 2000
+              },
+              "signature": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{128}$"
+              }
+            },
+            "required": [
+              "conditions",
+              "signature"
+            ]
+          },
+          "profile_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "profile_version_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "tenant_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "runtime_generation": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tool_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "payload_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "nonce": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "issued_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "expires_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "signature": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{128}$"
+          }
+        },
+        "required": [
+          "version",
+          "principal_pubkey",
+          "owner_pubkey",
+          "owner_attestation",
+          "profile_id",
+          "profile_version_sha256",
+          "tenant_id",
+          "runtime_generation",
+          "tool_name",
+          "payload_sha256",
+          "nonce",
+          "issued_at",
+          "expires_at",
+          "signature"
+        ],
+        "constraints": [
+          "expires_at > issued_at",
+          "tenant_id equals server-resolved tenant",
+          "tool_name equals dispatch target",
+          "payload_sha256 binds exact raw request without identity_envelope",
+          "principal_pubkey verifies signature",
+          "owner_pubkey verifies owner_attestation",
+          "profile hash resolves current authorized bytes",
+          "nonce atomically first-use in shared tenant store"
+        ]
+      }
+    },
+    "required": [
+      "caller_instance_id",
+      "auftrag_id",
+      "step_id",
+      "status",
+      "request_id",
+      "identity_envelope"
+    ]
+  },
+  "auftrag_block": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "caller_instance_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "request_id": {
+        "type": "string",
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9._:-]+$",
+        "normalization": "none; exact ASCII bytes are the idempotency identity"
+      },
+      "auftrag_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "reason": {
+        "type": "string",
+        "maxLength": 4000
+      },
+      "step_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "block_type": {
+        "type": "string",
+        "default": "unclassified",
+        "maxLength": 64
+      },
+      "identity_envelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "string",
+            "const": "1.0"
+          },
+          "principal_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_attestation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "conditions": {
+                "type": "string",
+                "maxLength": 2000
+              },
+              "signature": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{128}$"
+              }
+            },
+            "required": [
+              "conditions",
+              "signature"
+            ]
+          },
+          "profile_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "profile_version_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "tenant_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "runtime_generation": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tool_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "payload_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "nonce": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "issued_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "expires_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "signature": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{128}$"
+          }
+        },
+        "required": [
+          "version",
+          "principal_pubkey",
+          "owner_pubkey",
+          "owner_attestation",
+          "profile_id",
+          "profile_version_sha256",
+          "tenant_id",
+          "runtime_generation",
+          "tool_name",
+          "payload_sha256",
+          "nonce",
+          "issued_at",
+          "expires_at",
+          "signature"
+        ],
+        "constraints": [
+          "expires_at > issued_at",
+          "tenant_id equals server-resolved tenant",
+          "tool_name equals dispatch target",
+          "payload_sha256 binds exact raw request without identity_envelope",
+          "principal_pubkey verifies signature",
+          "owner_pubkey verifies owner_attestation",
+          "profile hash resolves current authorized bytes",
+          "nonce atomically first-use in shared tenant store"
+        ]
+      }
+    },
+    "required": [
+      "caller_instance_id",
+      "auftrag_id",
+      "reason",
+      "request_id",
+      "identity_envelope"
+    ]
+  },
+  "auftrag_resume": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "caller_instance_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "request_id": {
+        "type": "string",
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9._:-]+$",
+        "normalization": "none; exact ASCII bytes are the idempotency identity"
+      },
+      "auftrag_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "resolution": {
+        "type": "string",
+        "maxLength": 4000
+      },
+      "identity_envelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "string",
+            "const": "1.0"
+          },
+          "principal_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_attestation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "conditions": {
+                "type": "string",
+                "maxLength": 2000
+              },
+              "signature": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{128}$"
+              }
+            },
+            "required": [
+              "conditions",
+              "signature"
+            ]
+          },
+          "profile_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "profile_version_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "tenant_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "runtime_generation": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tool_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "payload_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "nonce": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "issued_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "expires_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "signature": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{128}$"
+          }
+        },
+        "required": [
+          "version",
+          "principal_pubkey",
+          "owner_pubkey",
+          "owner_attestation",
+          "profile_id",
+          "profile_version_sha256",
+          "tenant_id",
+          "runtime_generation",
+          "tool_name",
+          "payload_sha256",
+          "nonce",
+          "issued_at",
+          "expires_at",
+          "signature"
+        ],
+        "constraints": [
+          "expires_at > issued_at",
+          "tenant_id equals server-resolved tenant",
+          "tool_name equals dispatch target",
+          "payload_sha256 binds exact raw request without identity_envelope",
+          "principal_pubkey verifies signature",
+          "owner_pubkey verifies owner_attestation",
+          "profile hash resolves current authorized bytes",
+          "nonce atomically first-use in shared tenant store"
+        ]
+      }
+    },
+    "required": [
+      "caller_instance_id",
+      "auftrag_id",
+      "resolution",
+      "request_id",
+      "identity_envelope"
+    ]
+  },
+  "auftrag_close": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "caller_instance_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "request_id": {
+        "type": "string",
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9._:-]+$",
+        "normalization": "none; exact ASCII bytes are the idempotency identity"
+      },
+      "auftrag_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "result": {
+        "type": "string",
+        "enum": [
+          "success",
+          "partial",
+          "fail"
+        ]
+      },
+      "summary": {
+        "type": "string",
+        "maxLength": 4000
+      },
+      "kpi_results": {
+        "type": "string",
+        "default": "{}",
+        "maxLength": 100000,
+        "encoding": "json_object_string_v1",
+        "decoded_schema": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "met",
+              "value"
+            ],
+            "properties": {
+              "met": {
+                "type": "boolean"
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string",
+                  "boolean"
+                ]
+              },
+              "evidence": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            }
+          },
+          "matching_rule": "keys must exactly equal exit_kpis.required; each met must be true for success/partial close"
+        }
+      },
+      "duration_actual": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 31536000
+      },
+      "execution_quality": {
+        "type": "number",
+        "minimum": -1,
+        "maximum": 10
+      },
+      "decision_quality": {
+        "type": "number",
+        "minimum": -1,
+        "maximum": 10
+      },
+      "root_cause": {
+        "type": "string",
+        "maxLength": 4000
+      },
+      "root_cause_category": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "kpis_verified": {
+        "type": "string",
+        "maxLength": 20000,
+        "encoding": "csv_or_json_array_v1"
+      },
+      "existing_outcome_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "identity_envelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "string",
+            "const": "1.0"
+          },
+          "principal_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_attestation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "conditions": {
+                "type": "string",
+                "maxLength": 2000
+              },
+              "signature": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{128}$"
+              }
+            },
+            "required": [
+              "conditions",
+              "signature"
+            ]
+          },
+          "profile_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "profile_version_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "tenant_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "runtime_generation": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tool_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "payload_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "nonce": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "issued_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "expires_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "signature": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{128}$"
+          }
+        },
+        "required": [
+          "version",
+          "principal_pubkey",
+          "owner_pubkey",
+          "owner_attestation",
+          "profile_id",
+          "profile_version_sha256",
+          "tenant_id",
+          "runtime_generation",
+          "tool_name",
+          "payload_sha256",
+          "nonce",
+          "issued_at",
+          "expires_at",
+          "signature"
+        ],
+        "constraints": [
+          "expires_at > issued_at",
+          "tenant_id equals server-resolved tenant",
+          "tool_name equals dispatch target",
+          "payload_sha256 binds exact raw request without identity_envelope",
+          "principal_pubkey verifies signature",
+          "owner_pubkey verifies owner_attestation",
+          "profile hash resolves current authorized bytes",
+          "nonce atomically first-use in shared tenant store"
+        ]
+      }
+    },
+    "required": [
+      "caller_instance_id",
+      "auftrag_id",
+      "result",
+      "request_id",
+      "identity_envelope"
+    ]
+  },
+  "auftrag_cancel": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "caller_instance_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "request_id": {
+        "type": "string",
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9._:-]+$",
+        "normalization": "none; exact ASCII bytes are the idempotency identity"
+      },
+      "auftrag_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "reason": {
+        "type": "string",
+        "maxLength": 4000
+      },
+      "identity_envelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "string",
+            "const": "1.0"
+          },
+          "principal_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_attestation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "conditions": {
+                "type": "string",
+                "maxLength": 2000
+              },
+              "signature": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{128}$"
+              }
+            },
+            "required": [
+              "conditions",
+              "signature"
+            ]
+          },
+          "profile_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "profile_version_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "tenant_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "runtime_generation": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tool_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "payload_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "nonce": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "issued_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "expires_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "signature": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{128}$"
+          }
+        },
+        "required": [
+          "version",
+          "principal_pubkey",
+          "owner_pubkey",
+          "owner_attestation",
+          "profile_id",
+          "profile_version_sha256",
+          "tenant_id",
+          "runtime_generation",
+          "tool_name",
+          "payload_sha256",
+          "nonce",
+          "issued_at",
+          "expires_at",
+          "signature"
+        ],
+        "constraints": [
+          "expires_at > issued_at",
+          "tenant_id equals server-resolved tenant",
+          "tool_name equals dispatch target",
+          "payload_sha256 binds exact raw request without identity_envelope",
+          "principal_pubkey verifies signature",
+          "owner_pubkey verifies owner_attestation",
+          "profile hash resolves current authorized bytes",
+          "nonce atomically first-use in shared tenant store"
+        ]
+      }
+    },
+    "required": [
+      "caller_instance_id",
+      "auftrag_id",
+      "request_id",
+      "identity_envelope"
+    ]
+  },
+  "auftrag_get_changelog": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "caller_instance_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "auftrag_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "instance_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "project": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "period": {
+        "type": "string",
+        "default": "30d",
+        "maxLength": 16
+      },
+      "action": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "limit": {
+        "type": "integer",
+        "default": 50,
+        "minimum": 1,
+        "maximum": 100
+      },
+      "offset": {
+        "type": "integer",
+        "default": 0,
+        "minimum": 0,
+        "maximum": 100000
+      },
+      "identity_envelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "string",
+            "const": "1.0"
+          },
+          "principal_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_attestation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "conditions": {
+                "type": "string",
+                "maxLength": 2000
+              },
+              "signature": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{128}$"
+              }
+            },
+            "required": [
+              "conditions",
+              "signature"
+            ]
+          },
+          "profile_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "profile_version_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "tenant_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "runtime_generation": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tool_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "payload_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "nonce": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "issued_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "expires_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "signature": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{128}$"
+          }
+        },
+        "required": [
+          "version",
+          "principal_pubkey",
+          "owner_pubkey",
+          "owner_attestation",
+          "profile_id",
+          "profile_version_sha256",
+          "tenant_id",
+          "runtime_generation",
+          "tool_name",
+          "payload_sha256",
+          "nonce",
+          "issued_at",
+          "expires_at",
+          "signature"
+        ],
+        "constraints": [
+          "expires_at > issued_at",
+          "tenant_id equals server-resolved tenant",
+          "tool_name equals dispatch target",
+          "payload_sha256 binds exact raw request without identity_envelope",
+          "principal_pubkey verifies signature",
+          "owner_pubkey verifies owner_attestation",
+          "profile hash resolves current authorized bytes",
+          "nonce atomically first-use in shared tenant store"
+        ]
+      }
+    },
+    "required": [
+      "caller_instance_id",
+      "identity_envelope"
+    ]
+  },
+  "get_instance_activity": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "auftrag_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "limit": {
+        "type": "integer",
+        "default": 50,
+        "minimum": 1,
+        "maximum": 100
+      },
+      "offset": {
+        "type": "integer",
+        "default": 0,
+        "minimum": 0,
+        "maximum": 100000
+      },
+      "caller_instance_id": {
+        "type": "string",
+        "maxLength": 128
+      },
+      "identity_envelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "string",
+            "const": "1.0"
+          },
+          "principal_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_pubkey": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_attestation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "conditions": {
+                "type": "string",
+                "maxLength": 2000
+              },
+              "signature": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{128}$"
+              }
+            },
+            "required": [
+              "conditions",
+              "signature"
+            ]
+          },
+          "profile_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "profile_version_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "tenant_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "runtime_generation": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tool_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "payload_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "nonce": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "issued_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "expires_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 253402300799
+          },
+          "signature": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{128}$"
+          }
+        },
+        "required": [
+          "version",
+          "principal_pubkey",
+          "owner_pubkey",
+          "owner_attestation",
+          "profile_id",
+          "profile_version_sha256",
+          "tenant_id",
+          "runtime_generation",
+          "tool_name",
+          "payload_sha256",
+          "nonce",
+          "issued_at",
+          "expires_at",
+          "signature"
+        ],
+        "constraints": [
+          "expires_at > issued_at",
+          "tenant_id equals server-resolved tenant",
+          "tool_name equals dispatch target",
+          "payload_sha256 binds exact raw request without identity_envelope",
+          "principal_pubkey verifies signature",
+          "owner_pubkey verifies owner_attestation",
+          "profile hash resolves current authorized bytes",
+          "nonce atomically first-use in shared tenant store"
+        ]
+      }
+    },
+    "required": [
+      "auftrag_id",
+      "caller_instance_id",
+      "identity_envelope"
+    ]
+  }
+}

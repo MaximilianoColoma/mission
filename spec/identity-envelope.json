@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "model": "Shared Witness/Mission cryptographic identity envelope",
+  "contract_version": "1.1.0-draft.3",
+  "source_reference": {
+    "repository": "https://github.com/block/buzz",
+    "commit": "a2d8be5efa126221c7676f7797555dfb2bf5b0e0"
+  },
+  "identity": {
+    "authority": "verified instance public key",
+    "non_authorities": ["display_name", "profile_id", "pid", "thread_id", "process_registry", "caller_instance_id", "forwarded_metadata"],
+    "request_binding": ["principal_pubkey", "owner_pubkey", "profile_id", "profile_version_sha256", "tenant_id", "runtime_generation", "tool_name", "payload_sha256", "nonce", "issued_at", "expires_at"]
+  },
+  "delegation": {
+    "domain_separator": "witness-mission:agent-auth:v1:",
+    "semantics": "authorization evidence only; principal remains author",
+    "conditions": ["tenant_id", "profile_id", "profile_version_sha256", "not_before", "expires_at", "capabilities", "runtime_generation"],
+    "forbidden": ["self_attestation", "author_rewrite", "privilege_union", "delegation_by_name"],
+    "mission_binding": "assignment owner and every lifecycle transition recheck same principal; transfer, replacement and profile change are explicit signed transitions"
+  },
+  "profile_binding": {
+    "coordinate": ["profile_id", "profile_version_sha256"],
+    "semantics": "configuration not authority",
+    "spawn_gate": "principal key, owner attestation, tenant, profile bytes/hash and runtime generation resolve atomically or spawn is denied",
+    "orphan_policy": "missing or hash-mismatched profile blocks start",
+    "reserved_namespace": ["WITMIS_PRIVATE_KEY", "WITMIS_OWNER_ATTESTATION", "WITMIS_TENANT_ID", "WITMIS_PROFILE_ID", "WITMIS_PROFILE_VERSION_SHA256", "WITMIS_RUNTIME_GENERATION", "WITMIS_ALLOWED_CAPABILITIES"]
+  },
+  "replay": {
+    "verify_order": ["parse strict envelope", "resolve tenant server-side", "verify request signature", "verify owner attestation", "verify profile hash", "verify revocation", "atomically claim tenant+principal+nonce", "authorize resource", "dispatch"],
+    "store": "shared atomic set-if-absent",
+    "key": ["tenant_id", "principal_pubkey", "nonce"],
+    "failure_policy": "deny on duplicate, unavailable store or indeterminate claim",
+    "no_process_local_fallback": true
+  },
+  "revocation": {
+    "authorities": ["owner membership/status", "owner attestation id", "principal pubkey", "profile version", "runtime generation"],
+    "effects": ["deny new requests immediately", "terminate or revalidate active sessions", "invalidate replay/session caches", "block Mission transitions and Witness writes", "emit redacted immutable audit event"],
+    "active_session_policy": "revocation generation checked at every security-sensitive operation; no reconnect-only grace",
+    "key_rotation": "new principal requires explicit replacement transition; old principal remains revoked"
+  },
+  "acceptance_refs": ["IDU-001", "IDU-002", "IDU-003", "IDU-004", "IDU-005", "IDU-006", "IDU-007", "IDU-008", "IDU-009"]
+}

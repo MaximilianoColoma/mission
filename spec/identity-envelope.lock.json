@@ -1,0 +1,9 @@
+{
+  "schema_version": "1.0",
+  "contract_version": "1.1.0-draft.3",
+  "canonical_repository": "MaximilianoColoma/witness",
+  "canonical_path": "spec/identity-envelope.json",
+  "accepted_sha256": "681e4c4e3a3db6c3957e36d48700b19a52919ecad882aa8887637fc7244e537b",
+  "local_projection": "spec/identity-envelope.json",
+  "authority_statement": "The Mission copy is a digest-bound projection; it is not a second authority."
+}

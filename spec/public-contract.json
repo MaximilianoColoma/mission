@@ -1,0 +1,447 @@
+{
+  "contract_version": "1.1.0-draft.3",
+  "product": "Mission",
+  "technical_identifier": "auftrags-mcp",
+  "scope_status": "identity_upgrade_implemented_contract_alignment_active",
+  "purpose": "Persistent multi-agent work-state coordination with explicit assignments, lifecycle transitions, blocks, steps and audit history through MCP.",
+  "public_tools": [
+    "auftrag_create",
+    "auftrag_list",
+    "auftrag_get",
+    "auftrag_assign",
+    "auftrag_reassign_replace",
+    "auftrag_start",
+    "auftrag_checkpoint",
+    "auftrag_block",
+    "auftrag_resume",
+    "auftrag_close",
+    "auftrag_cancel",
+    "auftrag_get_changelog",
+    "get_instance_activity"
+  ],
+  "wire_contract": {
+    "path": "spec/wire-contract.json",
+    "version": "1.1.0-draft.3",
+    "authority": "Normative request/response fields, defaults, pagination, bounds and operation-specific errors."
+  },
+  "tool_semantics": {
+    "auftrag_create": "Create a validated queued Auftrag with explicit steps, constraints and acceptance fields. assigned_to and predecessor_id must be empty/omitted; assignment and replacement use their dedicated tools.",
+    "auftrag_list": "Read bounded Auftrag summaries by public filters.",
+    "auftrag_get": "Read one Auftrag including steps, blocks and progress.",
+    "auftrag_assign": "Assign a queued Auftrag under creator/role policy.",
+    "auftrag_reassign_replace": "Atomically terminate the old executable token as cancelled with reason REPLACED and create one assigned replacement whose immutable predecessor_id is the old ID. Copy specification and remaining steps, never completed effects; old Auftrag cannot resume/start/checkpoint.",
+    "auftrag_start": "Transition assigned to active and activate the first step.",
+    "auftrag_checkpoint": "Record one step result and advance only under the declared FSM. skipped is legal only for optional=true steps and advances like pass; required-step skip is INVALID_TRANSITION.",
+    "auftrag_block": "Record a blocking condition without losing the work token.",
+    "auftrag_resume": "Resolve the active block and restore the previous legal state.",
+    "auftrag_close": "Close only when acceptance and lifecycle preconditions are met. success/partial map to done; fail maps to failed and requires root_cause.",
+    "auftrag_cancel": "Use the explicit terminal escape only from declared cancellable states.",
+    "auftrag_get_changelog": "Read append-only lifecycle and actor audit events.",
+    "get_instance_activity": "Read bounded activity summaries without private profile topology."
+  },
+  "data_objects": [
+    "auftrag",
+    "step",
+    "block",
+    "changelog_event",
+    "principal",
+    "assignment"
+  ],
+  "schemas": {
+    "required": [
+      "auftraege",
+      "steps",
+      "blocks",
+      "changelog",
+      "identity_audit",
+      "auftrag_identity_bindings"
+    ],
+    "auth_support": [
+      "oauth_clients",
+      "oauth_tokens",
+      "oauth_auth_codes"
+    ],
+    "excluded_runtime_state": [
+      "decision_ledger",
+      "telegram_queue",
+      "webhook_secret",
+      "worker_trigger_files",
+      "production_federation_registry"
+    ]
+  },
+  "identity_authority": {
+    "authority_source": "authenticated_server_principal",
+    "trusted_boundary": "Configured CredentialProvider validates raw transport credentials and constructs Principal before MCP dispatch. Tool arguments, assignee names, forwarded metadata and private profile identifiers never construct authority.",
+    "accepted_credential_types": [
+      "oauth_bearer",
+      "api_key_provider",
+      "synthetic_test_provider"
+    ],
+    "principal_fields": [
+      "subject_id",
+      "client_id",
+      "role",
+      "credential_type",
+      "credential_id",
+      "issuer",
+      "audience",
+      "issued_at",
+      "expires_at",
+      "revocation_status"
+    ],
+    "principal_validation": "All fields required; identifiers canonical UTF-8 1..128; role declared; issuer/audience exact configured match; issued_at no more than 30 seconds future; expiry valid; revocation active. Any absence, conflict, malformed or provider-indeterminate claim denies before dispatch.",
+    "caller_claim_policy": "assertion_only_mismatch_deny",
+    "canonical_comparison": "Unicode NFC then exact case-sensitive byte comparison; missing caller claim where declared returns IDENTITY_MISMATCH.",
+    "mismatch_order": "Compare before Auftrag lookup, assignment disclosure, transition, changelog query, activity query or adapter path. Mismatch may write only a redacted security event.",
+    "default": "deny",
+    "delegation_supported": false,
+    "rule": "caller_instance_id is compatibility assertion only and must equal authenticated subject_id. Delegation is not supported in v1.",
+    "anonymous_policy": "All 13 MCP tools require authentication. Anonymous HTTP allowlist is exactly health and version; responses contain status and public version only.",
+    "anonymous_allowlist": [
+      "GET /health",
+      "GET /version"
+    ]
+  },
+  "credential_lifecycle": {
+    "provider_boundary": "Issuance, PKCE/code single use where OAuth applies, protected storage, hashing/encryption, scopes, rotation, revocation, replay detection, cleanup and compromise response are CredentialProvider responsibilities. OAuth tables never directly construct a Principal.",
+    "required_claims": [
+      "subject_id",
+      "client_id",
+      "role",
+      "credential_type",
+      "credential_id",
+      "issuer",
+      "audience",
+      "issued_at",
+      "expires_at",
+      "revocation_status"
+    ],
+    "expiry_policy": "Reject missing expiry, expired credentials and invalid/future issued_at before dispatch.",
+    "revocation_policy": "Reject revoked or indeterminate status; lookup/cache failure is deny; revocation cache maximum TTL 30 seconds.",
+    "replay_policy": "Authorization codes single-use and PKCE-bound in provider; credential_id audience-bound; request_id deduplicates state mutations.",
+    "failure_policy": "AUTHENTICATION_REQUIRED without token, code, claim dump or fallback caller identity."
+  },
+  "authorization_model": {
+    "mode": "single_tenant_v1",
+    "default": "deny",
+    "roles": {
+      "planner": [
+        "auftrag_create",
+        "auftrag_list",
+        "auftrag_get",
+        "auftrag_assign",
+        "auftrag_reassign_replace",
+        "auftrag_block",
+        "auftrag_resume",
+        "auftrag_cancel",
+        "auftrag_get_changelog",
+        "get_instance_activity"
+      ],
+      "worker": [
+        "auftrag_list",
+        "auftrag_get",
+        "auftrag_start",
+        "auftrag_checkpoint",
+        "auftrag_block",
+        "auftrag_resume",
+        "auftrag_close",
+        "auftrag_get_changelog",
+        "get_instance_activity"
+      ],
+      "auditor": [
+        "auftrag_list",
+        "auftrag_get",
+        "auftrag_get_changelog",
+        "get_instance_activity"
+      ],
+      "admin": [
+        "auftrag_create",
+        "auftrag_list",
+        "auftrag_get",
+        "auftrag_assign",
+        "auftrag_reassign_replace",
+        "auftrag_start",
+        "auftrag_checkpoint",
+        "auftrag_block",
+        "auftrag_resume",
+        "auftrag_close",
+        "auftrag_cancel",
+        "auftrag_get_changelog",
+        "get_instance_activity"
+      ]
+    },
+    "operations": {
+      "create": "planner/admin becomes creator_id",
+      "assign": "creator planner while queued; admin may bypass creator relation but not state or assignee eligibility",
+      "reassign_replace": "creator planner while queued/assigned; admin bypasses creator relation; predecessor remains immutable",
+      "start_checkpoint_close": "assigned worker; admin bypasses assignee relation but not FSM/step/KPI preconditions",
+      "block_resume": "creator planner, assigned worker, or admin relation bypass",
+      "cancel": "creator planner from queued only; admin relation bypass but queued-only remains",
+      "read": "planner only creator-owned; worker only assigned; auditor all tenant objects read-only; admin all tenant objects"
+    },
+    "admin_relation_policy": "Admin bypasses creator/assignee relation only. Admin never bypasses FSM, terminal immutability, input, audit, idempotency or eligibility rules; bypass action is audited with reason_code ADMIN_RELATION_BYPASS.",
+    "auditor_relation_policy": "Auditor may read all objects/changelog/activity in the configured single tenant but cannot mutate; sensitive free text remains redacted and queries are bounded/audited.",
+    "assignee_eligibility": "PrincipalDirectory must resolve new_assigned_to to an active non-revoked worker/admin principal in the configured tenant. Unknown, disabled, wrong-tenant or ineligible subjects deny before mutation.",
+    "self_assignment": "Planner cannot assign self unless PrincipalDirectory also grants worker role; admin remains subject to eligibility.",
+    "object_scope": "Each Auftrag stores creator_id and assigned_to subject IDs; operation matrix defines when relation is required or explicitly bypassed."
+  },
+  "privacy": {
+    "coverage_rule": "Every persisted string, string-list member and string-valued decoded JSON leaf is potential_pii unless explicitly classified as validated operational identifier or closed enum; recursively scan before Auftrag, step, block, changelog, index or log persistence.",
+    "field_classes": {
+      "auftrag.title/description/constraints/rollback/tags": "potential_pii",
+      "step.name/checkpoint_data/error_message": "potential_pii",
+      "block.reason/resolution": "potential_pii",
+      "close.summary/kpi_results/root_cause": "potential_pii",
+      "changelog.reason": "potential_pii",
+      "subject_ids_and_assignment": "operational_identity",
+      "oauth_material": "security_secret",
+      "activity_summary": "minimized_operational_metadata"
+    },
+    "write_policy": "Validate and redact every listed free-text field before persistence using stable [REDACTED:<CLASS>] markers; never place credentials or private topology in Auftrag content, changelog or logs.",
+    "read_policy": "Return redacted Auftrag content. get_instance_activity returns only actor subject_id, action, occurred_at, Auftrag ID and result code; no host, profile path, network route or credential metadata.",
+    "raw_credential_storage_in_content": false,
+    "logging_policy": "No request body, token, auth code, private adapter payload or rejected raw value in logs/audit."
+  },
+  "audit": {
+    "append_only": true,
+    "required_table": "changelog",
+    "identity_evidence_table": "identity_audit",
+    "required_events": [
+      "authentication_failure",
+      "identity_mismatch",
+      "authorization_denial",
+      "create",
+      "assign",
+      "reassign_replace",
+      "start",
+      "checkpoint",
+      "block",
+      "resume",
+      "close",
+      "cancel",
+      "read",
+      "activity_query",
+      "invalid_precondition",
+      "administrative_credential_action"
+    ],
+    "required_fields": [
+      "event_id",
+      "occurred_at",
+      "correlation_id",
+      "request_id",
+      "principal_subject_id",
+      "asserted_subject_id",
+      "client_id",
+      "role",
+      "auftrag_id_or_redacted",
+      "action",
+      "previous_state",
+      "next_state",
+      "reason_code",
+      "result_code"
+    ],
+    "forbidden_fields": [
+      "credential",
+      "token",
+      "oauth_code",
+      "raw_request_body",
+      "private_adapter_payload",
+      "rejected_raw_value"
+    ],
+    "failure_policy": "Mutation and changelog event commit in one SQLite transaction or neither commits. Changelog insertion failure rolls back state/assignment/step change.",
+    "identity_evidence_fields": ["event_id", "principal_pubkey", "owner_pubkey", "profile_id", "profile_version_sha256", "tenant_id", "runtime_generation", "envelope_nonce", "payload_sha256"],
+    "append_protection": "Canonical triggers changelog_no_update/changelog_no_delete and identity_audit_no_update/identity_audit_no_delete abort mutations. Startup verifies both closed column sets and all four trigger SQL digests; mismatch, extra column or absence sets read-only tamper mode and all writes return INTERNAL_ERROR."
+  },
+  "lifecycle": {
+    "states": [
+      "queued",
+      "assigned",
+      "active",
+      "blocked",
+      "validating",
+      "done",
+      "failed",
+      "cancelled"
+    ],
+    "transitions": [
+      "queued->assigned",
+      "assigned->active",
+      "assigned->cancelled(REPLACED_ONLY)",
+      "active->validating",
+      "validating->done",
+      "active->failed",
+      "validating->failed",
+      "active->blocked",
+      "validating->blocked",
+      "blocked->active",
+      "blocked->validating",
+      "queued->cancelled"
+    ],
+    "terminal": [
+      "done",
+      "failed",
+      "cancelled"
+    ],
+    "block_resume_rule": "Store previous_state on block; resume only to that legal previous_state after an explicit resolution.",
+    "checkpoint_rule": "Only assigned worker/admin; pass advances one active step; skipped advances only an optional=true step; fail moves Auftrag to failed; final pass/allowed skip moves active to validating. Wrong/out-of-order/replayed step denies atomically.",
+    "close_rule": "Only assigned worker/admin from validating with all required steps pass, optional steps pass/skipped and valid KPI payload. result success/partial -> done; result fail -> failed and non-empty root_cause required.",
+    "invalid_transition": "Return INVALID_TRANSITION without mutation or adapter call."
+  },
+  "errors": {
+    "classes": [
+      "AUTHENTICATION_REQUIRED",
+      "IDENTITY_MISMATCH",
+      "PERMISSION_DENIED",
+      "INVALID_INPUT",
+      "NOT_FOUND",
+      "INVALID_TRANSITION",
+      "CONFLICT",
+      "DEPENDENCY_UNAVAILABLE",
+      "INTERNAL_ERROR"
+    ],
+    "transport": "stable JSON envelope with status, code, correlation_id and non-sensitive message",
+    "existence_oracle_policy": "Unauthorized and absent Auftraege return the same NOT_FOUND envelope after authentication; no prior state, assignee or acceptance content leaks.",
+    "invalid_input_policy": "Return field name and validation code only; never echo rejected value, OAuth material or raw body.",
+    "dependency_error_policy": "DEPENDENCY_UNAVAILABLE names only public dependency class and correlation_id, never endpoint, route, host, token or private payload.",
+    "side_effect_policy": "Public core performs no Telegram, Witness, webhook, trigger-file or federation side effect. Adapter absence is normal and cannot alter core transaction result."
+  },
+  "idempotency_concurrency": {
+    "mutation_key": "request_id is required non-empty ASCII [A-Za-z0-9._:-], length 1..128; no Unicode/whitespace normalization; exact bytes plus subject and tool form identity",
+    "duplicate_same_payload": "same canonical RFC8785-style JSON payload returns original result without second state advance or business audit event",
+    "duplicate_different_payload": "CONFLICT",
+    "assignment_control": "state/version and assignee relation checked inside BEGIN IMMEDIATE transaction",
+    "checkpoint_control": "step active-state and request_id checked atomically; out-of-order, replayed or wrong-step checkpoints deny",
+    "retry": "same request_id only for documented transient provider/database error"
+  },
+  "compatibility": {
+    "silent_rename_allowed": false,
+    "stable": [
+      "technical identifier auftrags-mcp",
+      "13 listed MCP tool names",
+      "auftraege/steps/blocks/changelog semantics",
+      "declared lifecycle states and transition meanings"
+    ],
+    "claimed_actor_migration": "Existing caller_instance_id parameters remain during a deprecation window as assertion-only mismatch-deny fields.",
+    "breaking_change": "Requires versioned contract, migration/alias strategy, consumer impact, compatibility tests and explicit owner decision.",
+    "private_not_guaranteed": [
+      "internal assignee/profile names",
+      "Telegram routing",
+      "private webhook routes/ports",
+      "private service accounts",
+      "production federation entries",
+      "private bridge endpoints"
+    ],
+    "identity_upgrade": "Breaking pre-1.0 draft change: every public tool requires signed shared Identity Envelope; legacy caller claims remain non-authoritative assertions only."
+  },
+  "excluded": [
+    "telegram_adapter",
+    "witness_bridge",
+    "webhook_adapter",
+    "worker_trigger",
+    "private_profile_identifiers",
+    "production_federation",
+    "production_secrets",
+    "private_project_ids"
+  ],
+  "stability": {
+    "level": "draft",
+    "versioning": "SemVer begins only after first accepted public contract",
+    "deprecation": "minimum one documented release or explicit pre-1.0 break decision",
+    "immutability": "released versions and artifacts are never silently replaced"
+  },
+  "authority": {
+    "public_visibility_authorized": false,
+    "github_mutation_authorized": false,
+    "deployment_authorized": false,
+    "license": "OPEN_OWNER_GATE",
+    "technical_scope_owner": "Vision Principal Office",
+    "final_release_owner": "Max"
+  },
+  "acceptance_refs": [
+    "MIS-COMPAT-001",
+    "MIS-EVIDENCE-001",
+    "SUPPLY-001",
+    "SANITIZE-001",
+    "RIGHTS-001",
+    "VALIDATION-001"
+  ],
+  "statement_limits": [
+    "This contract is not implementation evidence.",
+    "Optional adapters are not part of core lifecycle acceptance.",
+    "Local SQLite evidence does not prove a deployed multi-instance runtime."
+  ],
+  "identity_envelope_contract": {
+    "version": "1.0",
+    "authority_source": "signed_identity_envelope",
+    "principal": "principal_pubkey is sole request author and must equal verified request signer",
+    "owner_attestation": {
+      "domain_separator": "witness-mission:agent-auth:v1:",
+      "binds": [
+        "principal_pubkey",
+        "tenant_id",
+        "profile_id",
+        "profile_version_sha256",
+        "not_before",
+        "expires_at",
+        "capabilities",
+        "runtime_generation"
+      ],
+      "semantics": "authorization evidence only; never rewrites author",
+      "revocation": "checked for every security-sensitive operation"
+    },
+    "profile_binding": {
+      "fields": [
+        "profile_id",
+        "profile_version_sha256"
+      ],
+      "semantics": "configuration not authority",
+      "spawn_rule": "single fail-closed chokepoint; key+attestation+tenant+profile hash+runtime generation must resolve together"
+    },
+    "request_binding": {
+      "fields": [
+        "version",
+        "principal_pubkey",
+        "owner_pubkey",
+        "owner_attestation",
+        "profile_id",
+        "profile_version_sha256",
+        "tenant_id",
+        "runtime_generation",
+        "tool_name",
+        "payload_sha256",
+        "nonce",
+        "issued_at",
+        "expires_at",
+        "signature"
+      ],
+      "tenant_rule": "tenant_id must equal server-resolved tenant; never selects tenant",
+      "signature_rule": "Ed25519 over the domain-separated RFC8785 canonical envelope without signature; payload_sha256 binds the exact finite-JSON raw request after removing identity_envelope",
+      "freshness": "issued_at/expires_at required; bounded server clock skew"
+    },
+    "replay": {
+      "claim_key": [
+        "tenant_id",
+        "principal_pubkey",
+        "nonce"
+      ],
+      "order": "verify signatures and bindings before atomic shared set-if-absent",
+      "failure": "duplicate or unavailable/indeterminate store denies"
+    },
+    "revocation": {
+      "subjects": [
+        "owner_pubkey",
+        "principal_pubkey",
+        "owner_attestation",
+        "profile_version_sha256",
+        "runtime_generation"
+      ],
+      "effect": "deny new request immediately; terminate or revalidate active session; invalidate caches; audit safely"
+    },
+    "compatibility_claims": [
+      "caller_instance_id is assertion-only and cannot authorize",
+      "legacy bearer/provider credentials cannot bypass signed envelope",
+      "no caller-controlled or process-global credential fallback; endpoint-scoped one-use in-memory capabilities are exact-request-bound and cannot bypass the signed envelope",
+      "no privilege union across principals"
+    ]
+  }
+}

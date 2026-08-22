@@ -1,0 +1,2614 @@
+{
+  "wire_contract_version": "1.1.0-draft.3",
+  "product": "Mission",
+  "technical_identifier": "auftrags-mcp",
+  "encoding": "JSON through MCP text result",
+  "compatibility_baseline": "Legacy source signatures are authoritative where README conflicts; additive pagination and request_id are explicit draft additions",
+  "tools": {
+    "auftrag_create": {
+      "request": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "caller_instance_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "request_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "normalization": "none; exact ASCII bytes are the idempotency identity"
+          },
+          "id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "project": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "steps": {
+            "type": "string",
+            "maxLength": 100000,
+            "encoding": "json_array_of_objects_string_v1",
+            "decoded_schema": {
+              "$ref": "#/definitions/steps_input"
+            }
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "exit_kpis": {
+            "type": "string",
+            "maxLength": 20000,
+            "encoding": "json_object_string_v1",
+            "decoded_schema": {
+              "$ref": "#/definitions/exit_kpis_input"
+            }
+          },
+          "constraints": {
+            "type": "string",
+            "maxLength": 20000
+          },
+          "rollback": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "decision_ref": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "based_on": {
+            "type": "string",
+            "maxLength": 4000,
+            "encoding": "csv_or_json_array_v1"
+          },
+          "priority": {
+            "type": "string",
+            "default": "normal",
+            "enum": [
+              "low",
+              "normal",
+              "high",
+              "critical"
+            ]
+          },
+          "assigned_to": {
+            "type": "string",
+            "maxLength": 0
+          },
+          "duration_planned": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 31536000
+          },
+          "predecessor_id": {
+            "type": "string",
+            "maxLength": 0
+          },
+          "tags": {
+            "type": "string",
+            "maxLength": 2000,
+            "encoding": "csv_or_json_array_v1"
+          },
+          "context_policy": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "identity_envelope": {
+            "$ref": "#/definitions/identity_envelope"
+          }
+        },
+        "required": [
+          "caller_instance_id",
+          "id",
+          "title",
+          "project",
+          "steps",
+          "request_id",
+          "identity_envelope"
+        ]
+      },
+      "response": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error"
+            ]
+          },
+          "correlation_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "AUTHENTICATION_REQUIRED",
+              "CONFLICT",
+              "IDENTITY_MISMATCH",
+              "INTERNAL_ERROR",
+              "INVALID_INPUT",
+              "OK",
+              "PERMISSION_DENIED",
+              "REPLAY_DETECTED",
+              "REVOKED_IDENTITY",
+              "PROFILE_BINDING_MISMATCH",
+              "TENANT_MISMATCH",
+              "REQUEST_BINDING_MISMATCH"
+            ]
+          },
+          "auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "status",
+          "correlation_id"
+        ],
+        "variants": {
+          "success": {
+            "required": [
+              "status",
+              "correlation_id",
+              "auftrag_id"
+            ],
+            "status_const": "ok",
+            "code_policy": "absent_or_OK",
+            "message_policy": "optional_non_sensitive"
+          },
+          "error": {
+            "required": [
+              "status",
+              "correlation_id",
+              "code",
+              "message"
+            ],
+            "status_const": "error",
+            "success_fields_policy": "absent"
+          }
+        }
+      },
+      "errors": [
+        "AUTHENTICATION_REQUIRED",
+        "IDENTITY_MISMATCH",
+        "PERMISSION_DENIED",
+        "INVALID_INPUT",
+        "INTERNAL_ERROR",
+        "CONFLICT",
+        "REPLAY_DETECTED",
+        "REVOKED_IDENTITY",
+        "PROFILE_BINDING_MISMATCH",
+        "TENANT_MISMATCH",
+        "REQUEST_BINDING_MISMATCH"
+      ],
+      "bounds": {
+        "steps_max_items": 100,
+        "idempotency": "request_id required for retry safety",
+        "assigned_to_predecessor": "must be empty/omitted; creation always queued with no predecessor; use assign/reassign tools"
+      }
+    },
+    "auftrag_list": {
+      "request": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "caller_instance_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "status": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "project": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "assigned_to": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "limit": {
+            "type": "integer",
+            "default": 50,
+            "minimum": 1,
+            "maximum": 100
+          },
+          "offset": {
+            "type": "integer",
+            "default": 0,
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "identity_envelope": {
+            "$ref": "#/definitions/identity_envelope"
+          }
+        },
+        "required": [
+          "caller_instance_id",
+          "identity_envelope"
+        ]
+      },
+      "response": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error"
+            ]
+          },
+          "correlation_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "AUTHENTICATION_REQUIRED",
+              "IDENTITY_MISMATCH",
+              "INTERNAL_ERROR",
+              "INVALID_INPUT",
+              "OK",
+              "PERMISSION_DENIED",
+              "REPLAY_DETECTED",
+              "REVOKED_IDENTITY",
+              "PROFILE_BINDING_MISMATCH",
+              "TENANT_MISMATCH",
+              "REQUEST_BINDING_MISMATCH"
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/auftrag"
+            }
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          },
+          "next_offset": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "status",
+          "correlation_id"
+        ],
+        "variants": {
+          "success": {
+            "required": [
+              "status",
+              "correlation_id",
+              "items",
+              "limit",
+              "offset",
+              "next_offset"
+            ],
+            "status_const": "ok",
+            "code_policy": "absent_or_OK",
+            "message_policy": "optional_non_sensitive"
+          },
+          "error": {
+            "required": [
+              "status",
+              "correlation_id",
+              "code",
+              "message"
+            ],
+            "status_const": "error",
+            "success_fields_policy": "absent"
+          }
+        }
+      },
+      "errors": [
+        "AUTHENTICATION_REQUIRED",
+        "IDENTITY_MISMATCH",
+        "PERMISSION_DENIED",
+        "INVALID_INPUT",
+        "INTERNAL_ERROR",
+        "REPLAY_DETECTED",
+        "REVOKED_IDENTITY",
+        "PROFILE_BINDING_MISMATCH",
+        "TENANT_MISMATCH",
+        "REQUEST_BINDING_MISMATCH"
+      ],
+      "bounds": {
+        "limit_max": 100,
+        "offset_max": 100000
+      }
+    },
+    "auftrag_get": {
+      "request": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "caller_instance_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "identity_envelope": {
+            "$ref": "#/definitions/identity_envelope"
+          }
+        },
+        "required": [
+          "auftrag_id",
+          "caller_instance_id",
+          "identity_envelope"
+        ]
+      },
+      "response": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error"
+            ]
+          },
+          "correlation_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "AUTHENTICATION_REQUIRED",
+              "IDENTITY_MISMATCH",
+              "INTERNAL_ERROR",
+              "INVALID_INPUT",
+              "NOT_FOUND",
+              "OK",
+              "PERMISSION_DENIED",
+              "REPLAY_DETECTED",
+              "REVOKED_IDENTITY",
+              "PROFILE_BINDING_MISMATCH",
+              "TENANT_MISMATCH",
+              "REQUEST_BINDING_MISMATCH"
+            ]
+          },
+          "auftrag": {
+            "$ref": "#/definitions/auftrag"
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "status",
+          "correlation_id"
+        ],
+        "variants": {
+          "success": {
+            "required": [
+              "status",
+              "correlation_id",
+              "auftrag"
+            ],
+            "status_const": "ok",
+            "code_policy": "absent_or_OK",
+            "message_policy": "optional_non_sensitive"
+          },
+          "error": {
+            "required": [
+              "status",
+              "correlation_id",
+              "code",
+              "message"
+            ],
+            "status_const": "error",
+            "success_fields_policy": "absent"
+          }
+        }
+      },
+      "errors": [
+        "AUTHENTICATION_REQUIRED",
+        "IDENTITY_MISMATCH",
+        "PERMISSION_DENIED",
+        "INVALID_INPUT",
+        "INTERNAL_ERROR",
+        "NOT_FOUND",
+        "REPLAY_DETECTED",
+        "REVOKED_IDENTITY",
+        "PROFILE_BINDING_MISMATCH",
+        "TENANT_MISMATCH",
+        "REQUEST_BINDING_MISMATCH"
+      ],
+      "bounds": {
+        "one_object": true
+      }
+    },
+    "auftrag_assign": {
+      "request": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "caller_instance_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "request_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "normalization": "none; exact ASCII bytes are the idempotency identity"
+          },
+          "auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "assigned_to": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "identity_envelope": {
+            "$ref": "#/definitions/identity_envelope"
+          }
+        },
+        "required": [
+          "caller_instance_id",
+          "auftrag_id",
+          "assigned_to",
+          "request_id",
+          "identity_envelope"
+        ]
+      },
+      "response": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error"
+            ]
+          },
+          "correlation_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "AUTHENTICATION_REQUIRED",
+              "CONFLICT",
+              "IDENTITY_MISMATCH",
+              "INTERNAL_ERROR",
+              "INVALID_INPUT",
+              "INVALID_TRANSITION",
+              "NOT_FOUND",
+              "OK",
+              "PERMISSION_DENIED",
+              "REPLAY_DETECTED",
+              "REVOKED_IDENTITY",
+              "PROFILE_BINDING_MISMATCH",
+              "TENANT_MISMATCH",
+              "REQUEST_BINDING_MISMATCH"
+            ]
+          },
+          "auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "status",
+          "correlation_id"
+        ],
+        "variants": {
+          "success": {
+            "required": [
+              "status",
+              "correlation_id",
+              "auftrag_id"
+            ],
+            "status_const": "ok",
+            "code_policy": "absent_or_OK",
+            "message_policy": "optional_non_sensitive"
+          },
+          "error": {
+            "required": [
+              "status",
+              "correlation_id",
+              "code",
+              "message"
+            ],
+            "status_const": "error",
+            "success_fields_policy": "absent"
+          }
+        }
+      },
+      "errors": [
+        "AUTHENTICATION_REQUIRED",
+        "IDENTITY_MISMATCH",
+        "PERMISSION_DENIED",
+        "INVALID_INPUT",
+        "INTERNAL_ERROR",
+        "NOT_FOUND",
+        "INVALID_TRANSITION",
+        "CONFLICT",
+        "REPLAY_DETECTED",
+        "REVOKED_IDENTITY",
+        "PROFILE_BINDING_MISMATCH",
+        "TENANT_MISMATCH",
+        "REQUEST_BINDING_MISMATCH"
+      ],
+      "bounds": {
+        "idempotency": "request_id required",
+        "assignee": "must exist and be eligible in PrincipalDirectory"
+      }
+    },
+    "auftrag_reassign_replace": {
+      "request": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "caller_instance_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "request_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "normalization": "none; exact ASCII bytes are the idempotency identity"
+          },
+          "auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "new_auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "new_assigned_to": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "context_policy": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "identity_envelope": {
+            "$ref": "#/definitions/identity_envelope"
+          }
+        },
+        "required": [
+          "caller_instance_id",
+          "auftrag_id",
+          "new_auftrag_id",
+          "new_assigned_to",
+          "request_id",
+          "identity_envelope"
+        ]
+      },
+      "response": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error"
+            ]
+          },
+          "correlation_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "AUTHENTICATION_REQUIRED",
+              "CONFLICT",
+              "IDENTITY_MISMATCH",
+              "INTERNAL_ERROR",
+              "INVALID_INPUT",
+              "INVALID_TRANSITION",
+              "NOT_FOUND",
+              "OK",
+              "PERMISSION_DENIED",
+              "REPLAY_DETECTED",
+              "REVOKED_IDENTITY",
+              "PROFILE_BINDING_MISMATCH",
+              "TENANT_MISMATCH",
+              "REQUEST_BINDING_MISMATCH"
+            ]
+          },
+          "auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "predecessor_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "status",
+          "correlation_id"
+        ],
+        "variants": {
+          "success": {
+            "required": [
+              "status",
+              "correlation_id",
+              "auftrag_id",
+              "predecessor_id"
+            ],
+            "status_const": "ok",
+            "code_policy": "absent_or_OK",
+            "message_policy": "optional_non_sensitive"
+          },
+          "error": {
+            "required": [
+              "status",
+              "correlation_id",
+              "code",
+              "message"
+            ],
+            "status_const": "error",
+            "success_fields_policy": "absent"
+          }
+        }
+      },
+      "errors": [
+        "AUTHENTICATION_REQUIRED",
+        "IDENTITY_MISMATCH",
+        "PERMISSION_DENIED",
+        "INVALID_INPUT",
+        "INTERNAL_ERROR",
+        "NOT_FOUND",
+        "INVALID_TRANSITION",
+        "CONFLICT",
+        "REPLAY_DETECTED",
+        "REVOKED_IDENTITY",
+        "PROFILE_BINDING_MISMATCH",
+        "TENANT_MISMATCH",
+        "REQUEST_BINDING_MISMATCH"
+      ],
+      "bounds": {
+        "reason_max": 4000,
+        "idempotency": "request_id required",
+        "compatibility": "source signature authoritative; README assigned_to alias is not accepted silently"
+      }
+    },
+    "auftrag_start": {
+      "request": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "caller_instance_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "request_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "normalization": "none; exact ASCII bytes are the idempotency identity"
+          },
+          "auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "identity_envelope": {
+            "$ref": "#/definitions/identity_envelope"
+          }
+        },
+        "required": [
+          "caller_instance_id",
+          "auftrag_id",
+          "request_id",
+          "identity_envelope"
+        ]
+      },
+      "response": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error"
+            ]
+          },
+          "correlation_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "AUTHENTICATION_REQUIRED",
+              "CONFLICT",
+              "IDENTITY_MISMATCH",
+              "INTERNAL_ERROR",
+              "INVALID_INPUT",
+              "INVALID_TRANSITION",
+              "NOT_FOUND",
+              "OK",
+              "PERMISSION_DENIED",
+              "REPLAY_DETECTED",
+              "REVOKED_IDENTITY",
+              "PROFILE_BINDING_MISMATCH",
+              "TENANT_MISMATCH",
+              "REQUEST_BINDING_MISMATCH"
+            ]
+          },
+          "auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "next_state": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "status",
+          "correlation_id"
+        ],
+        "variants": {
+          "success": {
+            "required": [
+              "status",
+              "correlation_id",
+              "auftrag_id",
+              "next_state"
+            ],
+            "status_const": "ok",
+            "code_policy": "absent_or_OK",
+            "message_policy": "optional_non_sensitive"
+          },
+          "error": {
+            "required": [
+              "status",
+              "correlation_id",
+              "code",
+              "message"
+            ],
+            "status_const": "error",
+            "success_fields_policy": "absent"
+          }
+        }
+      },
+      "errors": [
+        "AUTHENTICATION_REQUIRED",
+        "IDENTITY_MISMATCH",
+        "PERMISSION_DENIED",
+        "INVALID_INPUT",
+        "INTERNAL_ERROR",
+        "NOT_FOUND",
+        "INVALID_TRANSITION",
+        "CONFLICT",
+        "REPLAY_DETECTED",
+        "REVOKED_IDENTITY",
+        "PROFILE_BINDING_MISMATCH",
+        "TENANT_MISMATCH",
+        "REQUEST_BINDING_MISMATCH"
+      ],
+      "bounds": {
+        "idempotency": "request_id required"
+      }
+    },
+    "auftrag_checkpoint": {
+      "request": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "caller_instance_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "request_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "normalization": "none; exact ASCII bytes are the idempotency identity"
+          },
+          "auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "step_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "fail",
+              "skipped"
+            ]
+          },
+          "checkpoint_data": {
+            "type": "string",
+            "default": "{}",
+            "maxLength": 100000,
+            "encoding": "json_object_string_v1",
+            "decoded_schema": {
+              "$ref": "#/definitions/checkpoint_data_input"
+            }
+          },
+          "error_message": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "duration_actual": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 31536000
+          },
+          "identity_envelope": {
+            "$ref": "#/definitions/identity_envelope"
+          }
+        },
+        "required": [
+          "caller_instance_id",
+          "auftrag_id",
+          "step_id",
+          "status",
+          "request_id",
+          "identity_envelope"
+        ]
+      },
+      "response": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error"
+            ]
+          },
+          "correlation_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "AUTHENTICATION_REQUIRED",
+              "CONFLICT",
+              "IDENTITY_MISMATCH",
+              "INTERNAL_ERROR",
+              "INVALID_INPUT",
+              "INVALID_TRANSITION",
+              "NOT_FOUND",
+              "OK",
+              "PERMISSION_DENIED",
+              "REPLAY_DETECTED",
+              "REVOKED_IDENTITY",
+              "PROFILE_BINDING_MISMATCH",
+              "TENANT_MISMATCH",
+              "REQUEST_BINDING_MISMATCH"
+            ]
+          },
+          "auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "step_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "next_state": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "status",
+          "correlation_id"
+        ],
+        "variants": {
+          "success": {
+            "required": [
+              "status",
+              "correlation_id",
+              "auftrag_id",
+              "step_id",
+              "next_state"
+            ],
+            "status_const": "ok",
+            "code_policy": "absent_or_OK",
+            "message_policy": "optional_non_sensitive"
+          },
+          "error": {
+            "required": [
+              "status",
+              "correlation_id",
+              "code",
+              "message"
+            ],
+            "status_const": "error",
+            "success_fields_policy": "absent"
+          }
+        }
+      },
+      "errors": [
+        "AUTHENTICATION_REQUIRED",
+        "IDENTITY_MISMATCH",
+        "PERMISSION_DENIED",
+        "INVALID_INPUT",
+        "INTERNAL_ERROR",
+        "NOT_FOUND",
+        "INVALID_TRANSITION",
+        "CONFLICT",
+        "REPLAY_DETECTED",
+        "REVOKED_IDENTITY",
+        "PROFILE_BINDING_MISMATCH",
+        "TENANT_MISMATCH",
+        "REQUEST_BINDING_MISMATCH"
+      ],
+      "bounds": {
+        "checkpoint_max": 100000,
+        "idempotency": "request_id required; duplicate same payload returns same result, different payload conflicts",
+        "skipped": "allowed only for a step whose decoded optional=true; advances like pass; required step skipped returns INVALID_TRANSITION"
+      }
+    },
+    "auftrag_block": {
+      "request": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "caller_instance_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "request_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "normalization": "none; exact ASCII bytes are the idempotency identity"
+          },
+          "auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "step_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "block_type": {
+            "type": "string",
+            "default": "unclassified",
+            "maxLength": 64
+          },
+          "identity_envelope": {
+            "$ref": "#/definitions/identity_envelope"
+          }
+        },
+        "required": [
+          "caller_instance_id",
+          "auftrag_id",
+          "reason",
+          "request_id",
+          "identity_envelope"
+        ]
+      },
+      "response": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error"
+            ]
+          },
+          "correlation_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "AUTHENTICATION_REQUIRED",
+              "CONFLICT",
+              "IDENTITY_MISMATCH",
+              "INTERNAL_ERROR",
+              "INVALID_INPUT",
+              "INVALID_TRANSITION",
+              "NOT_FOUND",
+              "OK",
+              "PERMISSION_DENIED",
+              "REPLAY_DETECTED",
+              "REVOKED_IDENTITY",
+              "PROFILE_BINDING_MISMATCH",
+              "TENANT_MISMATCH",
+              "REQUEST_BINDING_MISMATCH"
+            ]
+          },
+          "auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "previous_state": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "next_state": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "status",
+          "correlation_id"
+        ],
+        "variants": {
+          "success": {
+            "required": [
+              "status",
+              "correlation_id",
+              "auftrag_id",
+              "previous_state",
+              "next_state"
+            ],
+            "status_const": "ok",
+            "code_policy": "absent_or_OK",
+            "message_policy": "optional_non_sensitive"
+          },
+          "error": {
+            "required": [
+              "status",
+              "correlation_id",
+              "code",
+              "message"
+            ],
+            "status_const": "error",
+            "success_fields_policy": "absent"
+          }
+        }
+      },
+      "errors": [
+        "AUTHENTICATION_REQUIRED",
+        "IDENTITY_MISMATCH",
+        "PERMISSION_DENIED",
+        "INVALID_INPUT",
+        "INTERNAL_ERROR",
+        "NOT_FOUND",
+        "INVALID_TRANSITION",
+        "CONFLICT",
+        "REPLAY_DETECTED",
+        "REVOKED_IDENTITY",
+        "PROFILE_BINDING_MISMATCH",
+        "TENANT_MISMATCH",
+        "REQUEST_BINDING_MISMATCH"
+      ],
+      "bounds": {
+        "one_active_block_v1": true,
+        "idempotency": "request_id required"
+      }
+    },
+    "auftrag_resume": {
+      "request": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "caller_instance_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "request_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "normalization": "none; exact ASCII bytes are the idempotency identity"
+          },
+          "auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "resolution": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "identity_envelope": {
+            "$ref": "#/definitions/identity_envelope"
+          }
+        },
+        "required": [
+          "caller_instance_id",
+          "auftrag_id",
+          "resolution",
+          "request_id",
+          "identity_envelope"
+        ]
+      },
+      "response": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error"
+            ]
+          },
+          "correlation_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "AUTHENTICATION_REQUIRED",
+              "CONFLICT",
+              "IDENTITY_MISMATCH",
+              "INTERNAL_ERROR",
+              "INVALID_INPUT",
+              "INVALID_TRANSITION",
+              "NOT_FOUND",
+              "OK",
+              "PERMISSION_DENIED",
+              "REPLAY_DETECTED",
+              "REVOKED_IDENTITY",
+              "PROFILE_BINDING_MISMATCH",
+              "TENANT_MISMATCH",
+              "REQUEST_BINDING_MISMATCH"
+            ]
+          },
+          "auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "previous_state": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "next_state": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "status",
+          "correlation_id"
+        ],
+        "variants": {
+          "success": {
+            "required": [
+              "status",
+              "correlation_id",
+              "auftrag_id",
+              "previous_state",
+              "next_state"
+            ],
+            "status_const": "ok",
+            "code_policy": "absent_or_OK",
+            "message_policy": "optional_non_sensitive"
+          },
+          "error": {
+            "required": [
+              "status",
+              "correlation_id",
+              "code",
+              "message"
+            ],
+            "status_const": "error",
+            "success_fields_policy": "absent"
+          }
+        }
+      },
+      "errors": [
+        "AUTHENTICATION_REQUIRED",
+        "IDENTITY_MISMATCH",
+        "PERMISSION_DENIED",
+        "INVALID_INPUT",
+        "INTERNAL_ERROR",
+        "NOT_FOUND",
+        "INVALID_TRANSITION",
+        "CONFLICT",
+        "REPLAY_DETECTED",
+        "REVOKED_IDENTITY",
+        "PROFILE_BINDING_MISMATCH",
+        "TENANT_MISMATCH",
+        "REQUEST_BINDING_MISMATCH"
+      ],
+      "bounds": {
+        "resolution_max": 4000,
+        "idempotency": "request_id required"
+      }
+    },
+    "auftrag_close": {
+      "request": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "caller_instance_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "request_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "normalization": "none; exact ASCII bytes are the idempotency identity"
+          },
+          "auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "success",
+              "partial",
+              "fail"
+            ]
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "kpi_results": {
+            "type": "string",
+            "default": "{}",
+            "maxLength": 100000,
+            "encoding": "json_object_string_v1",
+            "decoded_schema": {
+              "$ref": "#/definitions/kpi_results_input"
+            }
+          },
+          "duration_actual": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 31536000
+          },
+          "execution_quality": {
+            "type": "number",
+            "minimum": -1,
+            "maximum": 10
+          },
+          "decision_quality": {
+            "type": "number",
+            "minimum": -1,
+            "maximum": 10
+          },
+          "root_cause": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "root_cause_category": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "kpis_verified": {
+            "type": "string",
+            "maxLength": 20000,
+            "encoding": "csv_or_json_array_v1"
+          },
+          "existing_outcome_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "identity_envelope": {
+            "$ref": "#/definitions/identity_envelope"
+          }
+        },
+        "required": [
+          "caller_instance_id",
+          "auftrag_id",
+          "result",
+          "request_id",
+          "identity_envelope"
+        ]
+      },
+      "response": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error"
+            ]
+          },
+          "correlation_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "AUTHENTICATION_REQUIRED",
+              "CONFLICT",
+              "IDENTITY_MISMATCH",
+              "INTERNAL_ERROR",
+              "INVALID_INPUT",
+              "INVALID_TRANSITION",
+              "NOT_FOUND",
+              "OK",
+              "PERMISSION_DENIED",
+              "REPLAY_DETECTED",
+              "REVOKED_IDENTITY",
+              "PROFILE_BINDING_MISMATCH",
+              "TENANT_MISMATCH",
+              "REQUEST_BINDING_MISMATCH"
+            ]
+          },
+          "auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "next_state": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "status",
+          "correlation_id"
+        ],
+        "variants": {
+          "success": {
+            "required": [
+              "status",
+              "correlation_id",
+              "auftrag_id",
+              "next_state"
+            ],
+            "status_const": "ok",
+            "code_policy": "absent_or_OK",
+            "message_policy": "optional_non_sensitive"
+          },
+          "error": {
+            "required": [
+              "status",
+              "correlation_id",
+              "code",
+              "message"
+            ],
+            "status_const": "error",
+            "success_fields_policy": "absent"
+          }
+        }
+      },
+      "errors": [
+        "AUTHENTICATION_REQUIRED",
+        "IDENTITY_MISMATCH",
+        "PERMISSION_DENIED",
+        "INVALID_INPUT",
+        "INTERNAL_ERROR",
+        "NOT_FOUND",
+        "INVALID_TRANSITION",
+        "CONFLICT",
+        "REPLAY_DETECTED",
+        "REVOKED_IDENTITY",
+        "PROFILE_BINDING_MISMATCH",
+        "TENANT_MISMATCH",
+        "REQUEST_BINDING_MISMATCH"
+      ],
+      "bounds": {
+        "kpi_results_max": 100000,
+        "idempotency": "request_id required",
+        "result_mapping": "success or partial -> done after all close preconditions; fail -> failed and requires non-empty root_cause"
+      }
+    },
+    "auftrag_cancel": {
+      "request": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "caller_instance_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "request_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "normalization": "none; exact ASCII bytes are the idempotency identity"
+          },
+          "auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "identity_envelope": {
+            "$ref": "#/definitions/identity_envelope"
+          }
+        },
+        "required": [
+          "caller_instance_id",
+          "auftrag_id",
+          "request_id",
+          "identity_envelope"
+        ]
+      },
+      "response": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error"
+            ]
+          },
+          "correlation_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "AUTHENTICATION_REQUIRED",
+              "CONFLICT",
+              "IDENTITY_MISMATCH",
+              "INTERNAL_ERROR",
+              "INVALID_INPUT",
+              "INVALID_TRANSITION",
+              "NOT_FOUND",
+              "OK",
+              "PERMISSION_DENIED",
+              "REPLAY_DETECTED",
+              "REVOKED_IDENTITY",
+              "PROFILE_BINDING_MISMATCH",
+              "TENANT_MISMATCH",
+              "REQUEST_BINDING_MISMATCH"
+            ]
+          },
+          "auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "next_state": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "status",
+          "correlation_id"
+        ],
+        "variants": {
+          "success": {
+            "required": [
+              "status",
+              "correlation_id",
+              "auftrag_id",
+              "next_state"
+            ],
+            "status_const": "ok",
+            "code_policy": "absent_or_OK",
+            "message_policy": "optional_non_sensitive"
+          },
+          "error": {
+            "required": [
+              "status",
+              "correlation_id",
+              "code",
+              "message"
+            ],
+            "status_const": "error",
+            "success_fields_policy": "absent"
+          }
+        }
+      },
+      "errors": [
+        "AUTHENTICATION_REQUIRED",
+        "IDENTITY_MISMATCH",
+        "PERMISSION_DENIED",
+        "INVALID_INPUT",
+        "INTERNAL_ERROR",
+        "NOT_FOUND",
+        "INVALID_TRANSITION",
+        "CONFLICT",
+        "REPLAY_DETECTED",
+        "REVOKED_IDENTITY",
+        "PROFILE_BINDING_MISMATCH",
+        "TENANT_MISMATCH",
+        "REQUEST_BINDING_MISMATCH"
+      ],
+      "bounds": {
+        "queued_only": true,
+        "idempotency": "request_id required"
+      }
+    },
+    "auftrag_get_changelog": {
+      "request": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "caller_instance_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "instance_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "project": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "period": {
+            "type": "string",
+            "default": "30d",
+            "maxLength": 16
+          },
+          "action": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "limit": {
+            "type": "integer",
+            "default": 50,
+            "minimum": 1,
+            "maximum": 100
+          },
+          "offset": {
+            "type": "integer",
+            "default": 0,
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "identity_envelope": {
+            "$ref": "#/definitions/identity_envelope"
+          }
+        },
+        "required": [
+          "caller_instance_id",
+          "identity_envelope"
+        ]
+      },
+      "response": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error"
+            ]
+          },
+          "correlation_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "AUTHENTICATION_REQUIRED",
+              "IDENTITY_MISMATCH",
+              "INTERNAL_ERROR",
+              "INVALID_INPUT",
+              "OK",
+              "PERMISSION_DENIED",
+              "REPLAY_DETECTED",
+              "REVOKED_IDENTITY",
+              "PROFILE_BINDING_MISMATCH",
+              "TENANT_MISMATCH",
+              "REQUEST_BINDING_MISMATCH"
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/changelog_event"
+            }
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          },
+          "next_offset": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "status",
+          "correlation_id"
+        ],
+        "variants": {
+          "success": {
+            "required": [
+              "status",
+              "correlation_id",
+              "items",
+              "limit",
+              "offset",
+              "next_offset"
+            ],
+            "status_const": "ok",
+            "code_policy": "absent_or_OK",
+            "message_policy": "optional_non_sensitive"
+          },
+          "error": {
+            "required": [
+              "status",
+              "correlation_id",
+              "code",
+              "message"
+            ],
+            "status_const": "error",
+            "success_fields_policy": "absent"
+          }
+        }
+      },
+      "errors": [
+        "AUTHENTICATION_REQUIRED",
+        "IDENTITY_MISMATCH",
+        "PERMISSION_DENIED",
+        "INVALID_INPUT",
+        "INTERNAL_ERROR",
+        "REPLAY_DETECTED",
+        "REVOKED_IDENTITY",
+        "PROFILE_BINDING_MISMATCH",
+        "TENANT_MISMATCH",
+        "REQUEST_BINDING_MISMATCH"
+      ],
+      "bounds": {
+        "limit_max": 100,
+        "period_allowed": [
+          "1d",
+          "7d",
+          "30d",
+          "90d"
+        ],
+        "sparse_result": "no topology/profile fields"
+      }
+    },
+    "get_instance_activity": {
+      "request": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "auftrag_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "limit": {
+            "type": "integer",
+            "default": 50,
+            "minimum": 1,
+            "maximum": 100
+          },
+          "offset": {
+            "type": "integer",
+            "default": 0,
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "caller_instance_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "identity_envelope": {
+            "$ref": "#/definitions/identity_envelope"
+          }
+        },
+        "required": [
+          "auftrag_id",
+          "caller_instance_id",
+          "identity_envelope"
+        ]
+      },
+      "response": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error"
+            ]
+          },
+          "correlation_id": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "AUTHENTICATION_REQUIRED",
+              "IDENTITY_MISMATCH",
+              "INTERNAL_ERROR",
+              "INVALID_INPUT",
+              "NOT_FOUND",
+              "OK",
+              "PERMISSION_DENIED",
+              "REPLAY_DETECTED",
+              "REVOKED_IDENTITY",
+              "PROFILE_BINDING_MISMATCH",
+              "TENANT_MISMATCH",
+              "REQUEST_BINDING_MISMATCH"
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/activity_item"
+            }
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          },
+          "next_offset": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "status",
+          "correlation_id"
+        ],
+        "variants": {
+          "success": {
+            "required": [
+              "status",
+              "correlation_id",
+              "items",
+              "limit",
+              "offset",
+              "next_offset"
+            ],
+            "status_const": "ok",
+            "code_policy": "absent_or_OK",
+            "message_policy": "optional_non_sensitive"
+          },
+          "error": {
+            "required": [
+              "status",
+              "correlation_id",
+              "code",
+              "message"
+            ],
+            "status_const": "error",
+            "success_fields_policy": "absent"
+          }
+        }
+      },
+      "errors": [
+        "AUTHENTICATION_REQUIRED",
+        "IDENTITY_MISMATCH",
+        "PERMISSION_DENIED",
+        "INVALID_INPUT",
+        "INTERNAL_ERROR",
+        "NOT_FOUND",
+        "REPLAY_DETECTED",
+        "REVOKED_IDENTITY",
+        "PROFILE_BINDING_MISMATCH",
+        "TENANT_MISMATCH",
+        "REQUEST_BINDING_MISMATCH"
+      ],
+      "bounds": {
+        "limit_max": 100,
+        "scope": "one Auftrag; creator, assignee, auditor or admin only",
+        "fields": [
+          "actor_subject_id",
+          "action",
+          "occurred_at",
+          "auftrag_id",
+          "result_code"
+        ],
+        "sparse_result": "empty allowed only when no visible events; response still contains pagination metadata"
+      }
+    }
+  },
+  "encodings": {
+    "csv_or_json_array_v1": "String is either a JSON array of strings or comma-separated UTF-8 tokens; trim whitespace, reject empty tokens/duplicates after normalization; item bounds apply after decoding.",
+    "json_object_string_v1": "String must decode to one JSON object; duplicate keys, trailing data and non-object roots are INVALID_INPUT.",
+    "json_array_of_objects_string_v1": "String must decode to one JSON array of objects; duplicate object IDs, trailing data and non-array roots are INVALID_INPUT."
+  },
+  "definitions": {
+    "auftrag": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "project",
+        "status",
+        "creator_id",
+        "assigned_to",
+        "steps",
+        "created_at",
+        "updated_at",
+        "blocks",
+        "progress",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "project": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "creator_id": {
+          "type": "string"
+        },
+        "assigned_to": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "predecessor_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/step"
+          }
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "description": {
+          "type": "string"
+        },
+        "context_policy": {
+          "type": "string"
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rollback": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "based_on": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "exit_kpis": {
+          "$ref": "#/definitions/exit_kpis_input"
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/block"
+          }
+        },
+        "progress": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "completed",
+            "total",
+            "percent"
+          ],
+          "properties": {
+            "completed": {
+              "type": "integer"
+            },
+            "total": {
+              "type": "integer"
+            },
+            "percent": {
+              "type": "number"
+            }
+          }
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "optional",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "pending",
+            "active",
+            "pass",
+            "fail",
+            "skipped"
+          ]
+        }
+      }
+    },
+    "changelog_event": {
+      "type": "object",
+      "required": [
+        "event_id",
+        "occurred_at",
+        "correlation_id",
+        "request_id",
+        "principal_subject_id",
+        "asserted_subject_id",
+        "client_id",
+        "role",
+        "auftrag_id_or_redacted",
+        "action",
+        "previous_state",
+        "next_state",
+        "reason_code",
+        "result_code"
+      ],
+      "properties": {
+        "event_id": {
+          "type": "string"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "correlation_id": {
+          "type": "string"
+        },
+        "request_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "principal_subject_id": {
+          "type": "string"
+        },
+        "asserted_subject_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "client_id": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "auftrag_id_or_redacted": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "previous_state": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "next_state": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reason_code": {
+          "type": "string"
+        },
+        "result_code": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "activity_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actor_subject_id",
+        "action",
+        "occurred_at",
+        "auftrag_id",
+        "result_code"
+      ],
+      "properties": {
+        "actor_subject_id": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "auftrag_id": {
+          "type": "string"
+        },
+        "result_code": {
+          "type": "string"
+        }
+      }
+    },
+    "step_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "optional": {
+          "type": "boolean",
+          "default": false
+        },
+        "acceptance": {
+          "type": "string",
+          "maxLength": 2000
+        }
+      }
+    },
+    "steps_input": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/definitions/step_input"
+      },
+      "uniqueBy": "id"
+    },
+    "exit_kpis_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required"
+      ],
+      "properties": {
+        "required": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "checkpoint_data_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "evidence": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "number",
+              "string",
+              "boolean"
+            ]
+          }
+        }
+      }
+    },
+    "kpi_results_input": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "met",
+          "value"
+        ],
+        "properties": {
+          "met": {
+            "type": "boolean"
+          },
+          "value": {
+            "type": [
+              "number",
+              "string",
+              "boolean"
+            ]
+          },
+          "evidence": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        }
+      },
+      "matching_rule": "keys must exactly equal exit_kpis.required; each met must be true for success/partial close"
+    },
+    "block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "reason",
+        "previous_state",
+        "created_at",
+        "resolved_at",
+        "resolution"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "previous_state": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "resolved_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "resolution": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "identity_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string",
+          "const": "1.0"
+        },
+        "principal_pubkey": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "owner_pubkey": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "owner_attestation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "conditions": {
+              "type": "string",
+              "maxLength": 2000
+            },
+            "signature": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{128}$"
+            }
+          },
+          "required": [
+            "conditions",
+            "signature"
+          ]
+        },
+        "profile_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9._:-]+$"
+        },
+        "profile_version_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9._:-]+$"
+        },
+        "runtime_generation": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "tool_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "payload_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "nonce": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "issued_at": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 253402300799
+        },
+        "expires_at": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 253402300799
+        },
+        "signature": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{128}$"
+        }
+      },
+      "required": [
+        "version",
+        "principal_pubkey",
+        "owner_pubkey",
+        "owner_attestation",
+        "profile_id",
+        "profile_version_sha256",
+        "tenant_id",
+        "runtime_generation",
+        "tool_name",
+        "payload_sha256",
+        "nonce",
+        "issued_at",
+        "expires_at",
+        "signature"
+      ],
+      "constraints": [
+        "expires_at > issued_at",
+        "tenant_id equals server-resolved tenant",
+        "tool_name equals dispatch target",
+        "payload_sha256 binds exact raw request without identity_envelope",
+        "principal_pubkey verifies signature",
+        "owner_pubkey verifies owner_attestation",
+        "profile hash resolves current authorized bytes",
+        "nonce atomically first-use in shared tenant store"
+      ]
+    }
+  },
+  "identity_negative_matrix": [
+    {
+      "id": "NEG-VERSION",
+      "field": "version",
+      "mutation": "delete required field",
+      "invalid_fixture": {
+        "operation": "delete",
+        "path": "identity_envelope.version"
+      },
+      "expected_status": "error",
+      "expected_code": "INVALID_INPUT",
+      "must_reject": true,
+      "must_not_dispatch": true
+    },
+    {
+      "id": "NEG-PRINCIPAL-PUBKEY",
+      "field": "principal_pubkey",
+      "mutation": "delete required field",
+      "invalid_fixture": {
+        "operation": "delete",
+        "path": "identity_envelope.principal_pubkey"
+      },
+      "expected_status": "error",
+      "expected_code": "AUTHENTICATION_REQUIRED",
+      "must_reject": true,
+      "must_not_dispatch": true
+    },
+    {
+      "id": "NEG-OWNER-PUBKEY",
+      "field": "owner_pubkey",
+      "mutation": "delete required field",
+      "invalid_fixture": {
+        "operation": "delete",
+        "path": "identity_envelope.owner_pubkey"
+      },
+      "expected_status": "error",
+      "expected_code": "AUTHENTICATION_REQUIRED",
+      "must_reject": true,
+      "must_not_dispatch": true
+    },
+    {
+      "id": "NEG-OWNER-ATTESTATION",
+      "field": "owner_attestation",
+      "mutation": "delete required field",
+      "invalid_fixture": {
+        "operation": "delete",
+        "path": "identity_envelope.owner_attestation"
+      },
+      "expected_status": "error",
+      "expected_code": "AUTHENTICATION_REQUIRED",
+      "must_reject": true,
+      "must_not_dispatch": true
+    },
+    {
+      "id": "NEG-PROFILE-ID",
+      "field": "profile_id",
+      "mutation": "delete required field",
+      "invalid_fixture": {
+        "operation": "delete",
+        "path": "identity_envelope.profile_id"
+      },
+      "expected_status": "error",
+      "expected_code": "PROFILE_BINDING_MISMATCH",
+      "must_reject": true,
+      "must_not_dispatch": true
+    },
+    {
+      "id": "NEG-PROFILE-VERSION-SHA256",
+      "field": "profile_version_sha256",
+      "mutation": "delete required field",
+      "invalid_fixture": {
+        "operation": "delete",
+        "path": "identity_envelope.profile_version_sha256"
+      },
+      "expected_status": "error",
+      "expected_code": "PROFILE_BINDING_MISMATCH",
+      "must_reject": true,
+      "must_not_dispatch": true
+    },
+    {
+      "id": "NEG-TENANT-ID",
+      "field": "tenant_id",
+      "mutation": "delete required field",
+      "invalid_fixture": {
+        "operation": "delete",
+        "path": "identity_envelope.tenant_id"
+      },
+      "expected_status": "error",
+      "expected_code": "TENANT_MISMATCH",
+      "must_reject": true,
+      "must_not_dispatch": true
+    },
+    {
+      "id": "NEG-RUNTIME-GENERATION",
+      "field": "runtime_generation",
+      "mutation": "delete required field",
+      "invalid_fixture": {
+        "operation": "delete",
+        "path": "identity_envelope.runtime_generation"
+      },
+      "expected_status": "error",
+      "expected_code": "REVOKED_IDENTITY",
+      "must_reject": true,
+      "must_not_dispatch": true
+    },
+    {
+      "id": "NEG-TOOL-NAME",
+      "field": "tool_name",
+      "mutation": "delete required field",
+      "invalid_fixture": {
+        "operation": "delete",
+        "path": "identity_envelope.tool_name"
+      },
+      "expected_status": "error",
+      "expected_code": "REQUEST_BINDING_MISMATCH",
+      "must_reject": true,
+      "must_not_dispatch": true
+    },
+    {
+      "id": "NEG-PAYLOAD-SHA256",
+      "field": "payload_sha256",
+      "mutation": "delete required field",
+      "invalid_fixture": {
+        "operation": "delete",
+        "path": "identity_envelope.payload_sha256"
+      },
+      "expected_status": "error",
+      "expected_code": "REQUEST_BINDING_MISMATCH",
+      "must_reject": true,
+      "must_not_dispatch": true
+    },
+    {
+      "id": "NEG-NONCE",
+      "field": "nonce",
+      "mutation": "delete required field",
+      "invalid_fixture": {
+        "operation": "delete",
+        "path": "identity_envelope.nonce"
+      },
+      "expected_status": "error",
+      "expected_code": "REPLAY_DETECTED",
+      "must_reject": true,
+      "must_not_dispatch": true
+    },
+    {
+      "id": "NEG-ISSUED-AT",
+      "field": "issued_at",
+      "mutation": "delete required field",
+      "invalid_fixture": {
+        "operation": "delete",
+        "path": "identity_envelope.issued_at"
+      },
+      "expected_status": "error",
+      "expected_code": "AUTHENTICATION_REQUIRED",
+      "must_reject": true,
+      "must_not_dispatch": true
+    },
+    {
+      "id": "NEG-EXPIRES-AT",
+      "field": "expires_at",
+      "mutation": "delete required field",
+      "invalid_fixture": {
+        "operation": "delete",
+        "path": "identity_envelope.expires_at"
+      },
+      "expected_status": "error",
+      "expected_code": "AUTHENTICATION_REQUIRED",
+      "must_reject": true,
+      "must_not_dispatch": true
+    },
+    {
+      "id": "NEG-SIGNATURE",
+      "field": "signature",
+      "mutation": "delete required field",
+      "invalid_fixture": {
+        "operation": "delete",
+        "path": "identity_envelope.signature"
+      },
+      "expected_status": "error",
+      "expected_code": "AUTHENTICATION_REQUIRED",
+      "must_reject": true,
+      "must_not_dispatch": true
+    }
+  ]
+}

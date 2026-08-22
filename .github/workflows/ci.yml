@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install pinned uv
+        uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        with:
+          version: 0.11.8
+          enable-cache: true
+      - name: Locked clean install
+        run: uv sync --locked
+      - name: Full acceptance and repair suites
+        run: PYTHONDONTWRITEBYTECODE=1 uv run python -m pytest -q -p no:cacheprovider tests repair-tests
+      - name: Compile source
+        run: PYTHONDONTWRITEBYTECODE=1 uv run python -m compileall -q src
+      - name: Build wheel and source distribution
+        run: uv build
+      - name: Fresh wheel installation
+        run: |
+          uv venv --python 3.11 /tmp/product-fresh
+          uv pip install --python /tmp/product-fresh/bin/python dist/*.whl
+      - name: Real MCP first-run smoke
+        run: PYTHONDONTWRITEBYTECODE=1 /tmp/product-fresh/bin/python scripts/mcp_smoke.py
