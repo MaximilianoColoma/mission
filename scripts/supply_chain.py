@@ -95,7 +95,7 @@ def license_inventory() -> tuple[list[dict], list[str], list[str]]:
         if not expression:
             classifiers = [item for item in (dist.metadata.get_all("Classifier") or []) if item.startswith("License ::")]
             expression = classifiers[-1].split("::")[-1].strip() if classifiers else None
-        if normalized == DISTRIBUTION:
+        if normalized == DISTRIBUTION and not expression:
             owner_decisions.append(normalized)
             expression = "NOASSERTION_OWNER_DECISION"
         elif not expression:
